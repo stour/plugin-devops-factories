@@ -19,12 +19,11 @@ import org.eclipse.che.api.project.shared.dto.NewProject;
 import org.eclipse.che.api.project.shared.dto.Source;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.dto.server.DtoFactory;
+import org.eclipse.che.ide.rest.RestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -46,7 +45,7 @@ public class FactoryConnection {
     private final Client client;
 
     @Inject
-    public FactoryConnection(@Nonnull @Named("restContext") final String baseUrl) {
+    public FactoryConnection(@RestContext String baseUrl) {
         this.baseUrl = baseUrl;
         this.client = ClientBuilder.newClient();
     }
