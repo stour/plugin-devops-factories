@@ -11,7 +11,11 @@
 package com.codenvy.plugin.devopsfactories.server;
 
 import com.google.common.collect.Maps;
+import org.eclipse.che.api.core.*;
+import org.eclipse.che.api.core.rest.HttpJsonHelper;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
+import org.eclipse.che.api.core.rest.shared.dto.LinkParameter;
+import org.eclipse.che.api.factory.FactoryService;
 import org.eclipse.che.api.factory.dto.Factory;
 import org.eclipse.che.api.project.shared.dto.BuildersDescriptor;
 import org.eclipse.che.api.project.shared.dto.ImportSourceDescriptor;
@@ -19,20 +23,17 @@ import org.eclipse.che.api.project.shared.dto.NewProject;
 import org.eclipse.che.api.project.shared.dto.Source;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.dto.server.DtoFactory;
-import org.eclipse.che.ide.rest.RestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import javax.inject.Named;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static javax.ws.rs.core.UriBuilder.fromUri;
 
 /**
  * Created by stour on 10/09/15.
@@ -41,28 +42,37 @@ public class FactoryConnection {
 
     private static final Logger LOG = LoggerFactory.getLogger(FactoryConnection.class);
 
-    private final String baseUrl;
-    private final Client client;
-
     @Inject
-    public FactoryConnection(@RestContext String baseUrl) {
-        this.baseUrl = baseUrl;
-        this.client = ClientBuilder.newClient();
+    @Named("api.endpoint")
+    protected String apiEndPoint;
+
+    public FactoryConnection() {
+
     }
 
     public List<Factory> findMatchingFactories(String factoryName) {
-        Pair attribute = Pair.of("project.name", factoryName);
+        Pair factoryNameParam = Pair.of("project.name", factoryName);
 
         // Check if factories exist for the given attributes
-        WebTarget target = client.target(baseUrl + "/factory/find?" + attribute.first + "=" + attribute.second);
-        Response response = target.request(MediaType.APPLICATION_JSON).get();
-
+        String url = fromUri(apiEndPoint).path(FactoryService.class).path(FactoryService.class, "getFactoryByAttribute")
+                .build().toString();
+        LOG.info("getFactoryByAttribute: " + url);
         List<Link> factoryLinks = null;
-        if (response.getStatus() == 200) {
-            String responseString = response.readEntity(String.class);
-            factoryLinks = DtoFactory.getInstance().createListDtoFromJson(responseString, Link.class);
-        } else {
-            LOG.error(response.getStatus() + " - " + response.readEntity(String.class));
+        Link lUrl = DtoFactory.newDto(Link.class).withHref(url).withMethod("GET");
+        try {
+            factoryLinks = HttpJsonHelper.requestArray(Link.class, lUrl, factoryNameParam);
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (ServerException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (UnauthorizedException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (ForbiddenException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (NotFoundException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (ConflictException e) {
+            LOG.error(e.getMessage(), e);
         }
 
         // Get factories by IDs
@@ -74,15 +84,25 @@ public class FactoryConnection {
                 String[] hrefSplit = href.split("/");
                 String factoryId = hrefSplit[hrefSplit.length-1];
 
-                WebTarget targetGet = client.target(baseUrl + "/factory/" + factoryId);
-                Response responseGet = targetGet.request(MediaType.APPLICATION_JSON).get();
+                String url1 = fromUri(apiEndPoint).path(FactoryService.class).path(FactoryService.class, "getFactory")
+                        .build(factoryId).toString();
+                LOG.info("getFactory: " + url1);
 
-                if (responseGet.getStatus() == 200) {
-                    String responseString = responseGet.readEntity(String.class);
-                    Factory factory = DtoFactory.getInstance().createDtoFromJson(responseString, Factory.class);
+                try {
+                    Factory factory = HttpJsonHelper.get(Factory.class, url1);
                     factories.add(factory);
-                } else {
-                    LOG.error(response.getStatus() + " - " + response.readEntity(String.class));
+                } catch (IOException e) {
+                    LOG.error(e.getMessage(), e);
+                } catch (ServerException e) {
+                    LOG.error(e.getMessage(), e);
+                } catch (UnauthorizedException e) {
+                    LOG.error(e.getMessage(), e);
+                } catch (ForbiddenException e) {
+                    LOG.error(e.getMessage(), e);
+                } catch (NotFoundException e) {
+                    LOG.error(e.getMessage(), e);
+                } catch (ConflictException e) {
+                    LOG.error(e.getMessage(), e);
                 }
             }
         }
@@ -106,16 +126,24 @@ public class FactoryConnection {
         Factory updatedFactory = DtoFactory.newDto(Factory.class).withV(factoryV).withSource(updatedSource).withProject(project);
 
         // Update factory
-        WebTarget target = client.target(baseUrl + "/factory/" + factoryId);
-        Response response = target.request(MediaType.APPLICATION_JSON)
-                .put(Entity.json(DtoFactory.getInstance().toJson(updatedFactory)));
+        String url = fromUri(apiEndPoint).path(FactoryService.class).path(FactoryService.class, "updateFactory")
+                .build(factoryId).toString();
 
         Factory newFactory = null;
-        if (response.getStatus() == 200) {
-            String responseString = response.readEntity(String.class);
-            newFactory = DtoFactory.getInstance().createDtoFromJson(responseString, Factory.class);
-        } else {
-            LOG.error(response.getStatus() + " - " + response.readEntity(String.class));
+        try {
+            newFactory = HttpJsonHelper.put(Factory.class, url, updatedFactory);
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (ServerException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (UnauthorizedException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (ForbiddenException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (NotFoundException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (ConflictException e) {
+            LOG.error(e.getMessage(), e);
         }
         return newFactory;
     }
@@ -134,17 +162,26 @@ public class FactoryConnection {
         Factory postFactory = DtoFactory.newDto(Factory.class).withV("2.1").withSource(source).withProject(project);
 
         // Create factory
-        WebTarget target = client.target(baseUrl + "/factory");
-        Response response = target.request(MediaType.APPLICATION_JSON)
-                .post(Entity.json(DtoFactory.getInstance().toJson(postFactory)));
+        String url = fromUri(apiEndPoint).path(FactoryService.class).path(FactoryService.class, "saveFactory")
+                .build().toString();
 
         Factory newFactory = null;
-        if (response.getStatus() == 200) {
-            String responseString = response.readEntity(String.class);
-            newFactory = DtoFactory.getInstance().createDtoFromJson(responseString, Factory.class);
-        }  else {
-            LOG.error(response.getStatus() + " - " + response.readEntity(String.class));
+        try {
+            newFactory = HttpJsonHelper.post(Factory.class, url, postFactory);
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (ServerException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (UnauthorizedException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (ForbiddenException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (NotFoundException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (ConflictException e) {
+            LOG.error(e.getMessage(), e);
         }
+
         return newFactory;
     }
 }
