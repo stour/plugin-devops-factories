@@ -65,9 +65,10 @@ public class DevopsFactoriesService extends Service {
         final String branch = refSplit[refSplit.length-1];
         final String sourceLocation = contribution.getRepository().getHtmlUrl();
         final String commitId = contribution.getHead();
+        final String precedentCommitId = contribution.getBefore();
 
-        final String factoryName = contribution.getRepository() + "/" + branch + "/" + contribution.getBefore();
         LOG.debug("factoryName: " + factoryName);
+        final String factoryName = sourceLocation + "/" + branch + "/" + precedentCommitId;
 
         List<Factory> factories = factoryConnection.findMatchingFactories(factoryName);
 
