@@ -28,12 +28,12 @@ public class JenkinsConnector implements Connector {
     private static final Logger LOG = LoggerFactory.getLogger(JenkinsConnector.class);
 
     private final String jobName;
-    private final String jobConfigUrl;
+    private final String jobConfigXmlUrl;
     private final Client client;
 
     public JenkinsConnector(final String url, final String jobName) {
         this.jobName = jobName;
-        this.jobConfigUrl = url + "/job/" + jobName + "/config.xml";
+        this.jobConfigXmlUrl = url + "/job/" + jobName + "/config.xml";
         this.client = ClientBuilder.newClient();
     }
 
@@ -50,7 +50,7 @@ public class JenkinsConnector implements Connector {
     }
 
     private String getCurrentJenkinsJobConfiguration() {
-        WebTarget target = client.target(jobConfigUrl);
+        WebTarget target = client.target(jobConfigXmlUrl);
         Response response = target.request(MediaType.APPLICATION_XML).get();
         if (response.getStatus() == 200) {
             String responseString = response.readEntity(String.class);
@@ -65,7 +65,7 @@ public class JenkinsConnector implements Connector {
         String updatedJobConfigXml = jobConfigXml.replaceFirst(
                 "<description\\s?/>", "<description>" + factoryUrl + "<description />");
 
-        WebTarget target = client.target(jobConfigUrl);
+        WebTarget target = client.target(jobConfigXmlUrl);
         Response response = target.request(MediaType.APPLICATION_XML).post(Entity.xml(updatedJobConfigXml));
 
         if (response.getStatus() == 200) {
