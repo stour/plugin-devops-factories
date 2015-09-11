@@ -62,8 +62,9 @@ public class JenkinsConnector implements Connector {
     }
 
     private void updateJenkinsJobDescription(String factoryUrl, String jobConfigXml) {
+
         String updatedJobConfigXml = jobConfigXml.replaceFirst(
-                "<description\\s?/>", "<description>" + factoryUrl + "<description />");
+                "<description\\s?/>", "<description>" + factoryUrl + "</description>");
 
         WebTarget target = client.target(jobConfigXmlUrl);
         Response response = target.request(MediaType.APPLICATION_XML).post(Entity.xml(updatedJobConfigXml));
@@ -75,3 +76,4 @@ public class JenkinsConnector implements Connector {
         }
     }
 }
+

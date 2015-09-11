@@ -67,10 +67,11 @@ public class DevopsFactoriesService extends Service {
         final String commitId = contribution.getHead();
         final String precedentCommitId = contribution.getBefore();
 
-        LOG.debug("factoryName: " + factoryName);
         final String factoryName = sourceLocation + "/" + branch + "/" + precedentCommitId;
+        final String sanitizedFactoryName = factoryName.replace(":","-").replace("/","-");
+        LOG.info("factoryName: " + sanitizedFactoryName);
 
-        List<Factory> factories = factoryConnection.findMatchingFactories(factoryName);
+        List<Factory> factories = factoryConnection.findMatchingFactories(sanitizedFactoryName);
 
         if (factories != null) {
             Factory factory = null;
@@ -81,10 +82,10 @@ public class DevopsFactoriesService extends Service {
 
             } else if (factories.size() == 0) {
                 // Generate new factory
-                factory = factoryConnection.createNewFactory(factoryName, sourceLocation, branch, commitId);
+                factory = factoryConnection.createNewFactory(sanitizedFactoryName, sourceLocation, branch, commitId);
 
             } else {
-                LOG.error("findMatchingFactories(" + factoryName + ") found more than 1 factory !");
+                LOG.error("findMatchingFactories(" + sanitizedFactoryName + ") found more than 1 factory !");
             }
 
             if (factory != null) {
@@ -92,7 +93,7 @@ public class DevopsFactoriesService extends Service {
                 jenkinsConnector.addFactoryLink(factoryUrl);
             }
         } else {
-            LOG.error("factoryConnection.findMatchingFactories(" + factoryName + ") returned null");
+            LOG.error("factoryConnection.findMatchingFactories(" + sanitizedFactoryName + ") returned null");
         }
         return Response.ok().build();
     }
