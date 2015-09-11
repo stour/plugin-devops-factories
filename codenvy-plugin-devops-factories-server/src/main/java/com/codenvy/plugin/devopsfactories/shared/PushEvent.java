@@ -11,7 +11,6 @@
 package com.codenvy.plugin.devopsfactories.shared;
 
 import org.eclipse.che.dto.shared.DTO;
-import org.eclipse.che.ide.ext.github.shared.GitHubRepository;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
@@ -65,9 +64,9 @@ public interface PushEvent {
     PushEvent withCommitsArray(@NotNull final List<Commit> commitsArray);
 
 
-    GitHubRepository getRepository();
+    Repository getRepository();
 
-    void setRepository(@NotNull final GitHubRepository repository);
+    void setRepository(@NotNull final Repository repository);
 
-    PushEvent withRepository(@NotNull final GitHubRepository repository);
+    PushEvent withRepository(@NotNull final Repository repository);
 }

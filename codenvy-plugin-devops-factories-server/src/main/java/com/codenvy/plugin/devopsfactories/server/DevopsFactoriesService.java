@@ -63,7 +63,7 @@ public class DevopsFactoriesService extends Service {
 
         final String[] refSplit = contribution.getRef().split("/");
         final String branch = refSplit[refSplit.length-1];
-        final String sourceLocation = contribution.getRepository().getHtmlUrl();
+        final String sourceLocation = contribution.getRepository().getUrl();
         final String commitId = contribution.getHead();
         final String precedentCommitId = contribution.getBefore();
 
