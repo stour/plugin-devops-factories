@@ -63,12 +63,14 @@ public class DevopsFactoriesService extends Service {
 
         final String[] refSplit = contribution.getRef().split("/");
         final String branch = refSplit[refSplit.length-1];
-        final String sourceLocation = contribution.getRepository().getUrl();
+        final String repositoryUrl = contribution.getRepository().getHtmlUrl();
+        final String[] repositoryUrlSplit = repositoryUrl.split("/");
+        final String repositoryName = repositoryUrlSplit[repositoryUrlSplit.length-1];
         final String commitId = contribution.getHead();
         final String precedentCommitId = contribution.getBefore();
 
-        final String factoryName = sourceLocation + "/" + branch + "/" + precedentCommitId;
-        final String sanitizedFactoryName = factoryName.replace(":","-").replace("/","-");
+        final String factoryName = repositoryName + "/" + branch + "/" + precedentCommitId;
+        final String sanitizedFactoryName = factoryName.replace("/","-");
         LOG.info("factoryName: " + sanitizedFactoryName);
 
         List<Factory> factories = factoryConnection.findMatchingFactories(sanitizedFactoryName);
@@ -82,14 +84,14 @@ public class DevopsFactoriesService extends Service {
 
             } else if (factories.size() == 0) {
                 // Generate new factory
-                factory = factoryConnection.createNewFactory(sanitizedFactoryName, sourceLocation, branch, commitId);
+                factory = factoryConnection.createNewFactory(sanitizedFactoryName, repositoryUrl, branch, commitId);
 
             } else {
                 LOG.error("findMatchingFactories(" + sanitizedFactoryName + ") found more than 1 factory !");
             }
 
             if (factory != null) {
-                final String factoryUrl = "https://codenvy.com/f?id=" + factory.getId();
+                final String factoryUrl = "https://dev.box.com/f?id=" + factory.getId();
                 jenkinsConnector.addFactoryLink(factoryUrl);
             }
         } else {
