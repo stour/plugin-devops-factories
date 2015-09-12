@@ -39,11 +39,11 @@ public interface Repository {
     /**
      * Get repository's location.
      *
-     * @return {@link String} url
+     * @return {@link String} htmlUrl
      */
-    String getUrl();
+    String getHtmlUrl();
 
-    void setUrl(String url);
+    void setHtmlUrl(String htmlUrl);
 
-    Repository withUrl(String url);
+    Repository withHtmlUrl(String htmlUrl);
 }
