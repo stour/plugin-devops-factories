@@ -40,6 +40,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -88,7 +89,6 @@ public class FactoryConnection {
         // Check if factories exist for the given attributes
         String url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "getFactoryByAttribute")
                 .build().toString();
-        LOG.info("getFactoryByAttribute: " + url);
         List<Link> factoryLinks = null;
         Link lUrl = DtoFactory.newDto(Link.class).withHref(url).withMethod("GET");
         try {
@@ -234,27 +234,19 @@ public class FactoryConnection {
         }  else {
             LOG.error(response.getStatus() + " - " + response.readEntity(String.class));
         }
-        /*try {
-            if (userToken != null) {
-                Pair tokenParam = Pair.of("token", userToken.getValue());
-                newFactory = HttpJsonHelper.post(Factory.class, url, postFactory, tokenParam);
-            } else {
-                newFactory = HttpJsonHelper.post(Factory.class, url, postFactory);
-            }
-        } catch (IOException e) {
-            LOG.error(e.getMessage(), e);
-        } catch (ServerException e) {
-            LOG.error(e.getMessage(), e);
-        } catch (UnauthorizedException e) {
-            LOG.error(e.getMessage(), e);
-        } catch (ForbiddenException e) {
-            LOG.error(e.getMessage(), e);
-        } catch (NotFoundException e) {
-            LOG.error(e.getMessage(), e);
-        } catch (ConflictException e) {
-            LOG.error(e.getMessage(), e);
-        }*/
 
         return newFactory;
+    }
+
+    public static String getFactoryUrl(final List<Link> factoryLinks) {
+        String factoryUrl = null;
+        Iterator iter = factoryLinks.iterator();
+        while (iter.hasNext()) {
+            Link link = (Link)iter.next();
+            if (link.getRel().equals("create-project")) {
+                factoryUrl = link.getHref();
+            }
+        }
+        return factoryUrl;
     }
 }
