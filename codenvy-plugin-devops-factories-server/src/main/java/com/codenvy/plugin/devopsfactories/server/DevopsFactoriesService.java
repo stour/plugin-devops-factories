@@ -67,35 +67,36 @@ public class DevopsFactoriesService extends Service {
         final String[] repositoryUrlSplit = repositoryUrl.split("/");
         final String repositoryName = repositoryUrlSplit[repositoryUrlSplit.length-1];
         final String commitId = contribution.getHead();
-        final String precedentCommitId = contribution.getBefore();
 
-        final String factoryName = repositoryName + "/" + branch + "/" + precedentCommitId;
-        final String sanitizedFactoryName = factoryName.replace("/","-");
-        LOG.info("factoryName: " + sanitizedFactoryName);
+        final String factoryName = repositoryName + "--" + branch;
+        LOG.info("factoryName: " + factoryName);
 
-        List<Factory> factories = factoryConnection.findMatchingFactories(sanitizedFactoryName);
+        List<Factory> factories = factoryConnection.findMatchingFactories(factoryName);
 
-        if (factories != null) {
-            Factory factory = null;
-            if (factories.size() == 1) {
-                // Update existing factory
-                Factory oldFactory = factories.get(0);
-                factory = factoryConnection.updateFactory(oldFactory, commitId);
+        Factory factory = null;
+        if (factories == null) {
+            LOG.error("factoryConnection.findMatchingFactories(" + factoryName + ") returned null");
+        } else if (factories.size() == 1) {
+            // Update existing factory
+            Factory oldFactory = factories.get(0);
+            LOG.info("factoryConnection.updateFactory(" + oldFactory + ", " + commitId + ")");
+            factory = factoryConnection.updateFactory(oldFactory, commitId);
 
-            } else if (factories.size() == 0) {
-                // Generate new factory
-                factory = factoryConnection.createNewFactory(sanitizedFactoryName, repositoryUrl, branch, commitId);
+        } else if (factories.size() == 0) {
+            // Generate new factory
+            LOG.info("factoryConnection.createNewFactory(" + factoryName + ", " + repositoryUrl + ", " + branch + ", " + commitId + ")");
+            factory = factoryConnection.createNewFactory(factoryName, repositoryUrl, branch, commitId);
 
-            } else {
-                LOG.error("findMatchingFactories(" + sanitizedFactoryName + ") found more than 1 factory !");
-            }
+        } else {
+            LOG.error("findMatchingFactories(" + factoryName + ") found more than 1 factory !");
+        }
 
-            if (factory != null) {
-                final String factoryUrl = "https://dev.box.com/f?id=" + factory.getId();
+        if (factory != null) {
+            List<Link> factoryLinks = factory.getLinks();
+            final String factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
+            if (factoryUrl != null) {
                 jenkinsConnector.addFactoryLink(factoryUrl);
             }
-        } else {
-            LOG.error("factoryConnection.findMatchingFactories(" + sanitizedFactoryName + ") returned null");
         }
         return Response.ok().build();
     }
