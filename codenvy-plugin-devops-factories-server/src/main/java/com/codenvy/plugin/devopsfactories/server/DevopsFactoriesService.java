@@ -17,11 +17,11 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.core.rest.annotations.Description;
+import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.factory.dto.Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -39,7 +39,7 @@ public class DevopsFactoriesService extends Service {
     private final JenkinsConnector jenkinsConnector;
 
     @Inject
-    public DevopsFactoriesService(@Nonnull final FactoryConnection factoryConnection) {
+    public DevopsFactoriesService(final FactoryConnection factoryConnection) {
         this.factoryConnection = factoryConnection;
 
         // TODO add UI to configure + enable/disable new connectors
@@ -62,10 +62,10 @@ public class DevopsFactoriesService extends Service {
             throws ConflictException, ForbiddenException, ServerException, NotFoundException {
 
         final String[] refSplit = contribution.getRef().split("/");
-        final String branch = refSplit[refSplit.length-1];
+        final String branch = refSplit[refSplit.length - 1];
         final String repositoryUrl = contribution.getRepository().getHtmlUrl();
         final String[] repositoryUrlSplit = repositoryUrl.split("/");
-        final String repositoryName = repositoryUrlSplit[repositoryUrlSplit.length-1];
+        final String repositoryName = repositoryUrlSplit[repositoryUrlSplit.length - 1];
         final String commitId = contribution.getHead();
 
         final String factoryName = repositoryName + "--" + branch;
