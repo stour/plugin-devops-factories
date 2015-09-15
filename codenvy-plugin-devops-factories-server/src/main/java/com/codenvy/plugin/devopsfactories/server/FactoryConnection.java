@@ -68,6 +68,10 @@ public class FactoryConnection {
         try {
             String myCredentials = "{ \"username\": \"stephane.tournie@serli.com\", \"password\": \"stephane2015\" }";
             userToken = HttpJsonHelper.post(Token.class, url, DtoFactory.getInstance().createDtoFromJson(myCredentials, Credentials.class));
+
+            if (userToken != null) {
+                LOG.info("successfully authenticated with token " + userToken);
+            }
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
         } catch (ServerException e) {

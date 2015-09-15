@@ -35,6 +35,11 @@ public interface PushEvent {
 
     PushEvent withHead(@NotNull final String head);
 
+/*    String getAfter();
+
+    void setAfter(@NotNull final String after);
+
+    PushEvent withAfter(@NotNull final String after); */
 
     String getBefore();
 
@@ -52,16 +57,16 @@ public interface PushEvent {
 
     int getDistinctSize();
 
-    void setDistinctSize(@NotNull final int DistinctSize);
+    void setDistinctSize(@NotNull final int distinctSize);
 
-    PushEvent withDistinctSize(@NotNull final int DistinctSize);
+    PushEvent withDistinctSize(@NotNull final int distinctSize);
 
 
-    List<Commit> getCommitsArray();
+    List<Commit> getCommits();
 
-    void setCommitsArray(@NotNull final List<Commit> commitsArray);
+    void setCommits(@NotNull final List<Commit> commits);
 
-    PushEvent withCommitsArray(@NotNull final List<Commit> commitsArray);
+    PushEvent withCommits(@NotNull final List<Commit> commits);
 
 
     Repository getRepository();

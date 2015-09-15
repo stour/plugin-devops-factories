@@ -43,7 +43,7 @@ public class DevopsFactoriesService extends Service {
         this.factoryConnection = factoryConnection;
 
         // TODO add UI to configure + enable/disable new connectors
-        jenkinsConnector = new JenkinsConnector("http://runnerp11.codenvycorp.com:58395", "desktop-console-java");
+        jenkinsConnector = new JenkinsConnector("http://runnerp13.codenvycorp.com:61617", "desktop-console-java");
     }
 
     @ApiOperation(value = "Notify a new contribution on a GitHub project",
