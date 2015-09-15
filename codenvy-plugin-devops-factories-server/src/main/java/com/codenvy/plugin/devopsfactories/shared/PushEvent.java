@@ -29,18 +29,6 @@ public interface PushEvent {
     PushEvent withRef(@NotNull final String ref);
 
 
-    String getHead();
-
-    void setHead(@NotNull final String head);
-
-    PushEvent withHead(@NotNull final String head);
-
-/*    String getAfter();
-
-    void setAfter(@NotNull final String after);
-
-    PushEvent withAfter(@NotNull final String after); */
-
     String getBefore();
 
     void setBefore(@NotNull final String before);
@@ -48,18 +36,46 @@ public interface PushEvent {
     PushEvent withBefore(@NotNull final String before);
 
 
-    int getSize();
+    String getAfter();
 
-    void setSize(@NotNull final int size);
+    void setAfter(@NotNull final String after);
 
-    PushEvent withSize(@NotNull final int size);
+    PushEvent withAfter(@NotNull final String after);
 
 
-    int getDistinctSize();
+    boolean getCreated();
 
-    void setDistinctSize(@NotNull final int distinctSize);
+    void setCreated(@NotNull final boolean created);
 
-    PushEvent withDistinctSize(@NotNull final int distinctSize);
+    PushEvent withCreated(@NotNull final boolean created);
+
+
+    boolean getDeleted();
+
+    void setDeleted(@NotNull final boolean deleted);
+
+    PushEvent withDeleted(@NotNull final boolean deleted);
+
+
+    boolean getForced();
+
+    void setForced(@NotNull final boolean forced);
+
+    PushEvent withForced(@NotNull final boolean forced);
+
+
+    String getBaseRef();
+
+    void setBaseRef(@NotNull final String baseRef);
+
+    PushEvent withBaseRef(@NotNull final String baseRef);
+
+
+    String getCompare();
+
+    void setCompare(@NotNull final String compare);
+
+    PushEvent withCompare(@NotNull final String compare);
 
 
     List<Commit> getCommits();
@@ -69,9 +85,30 @@ public interface PushEvent {
     PushEvent withCommits(@NotNull final List<Commit> commits);
 
 
+    Commit getHeadCommit();
+
+    void setHeadCommit(@NotNull final Commit headCommit);
+
+    PushEvent withHeadCommit(@NotNull final Commit headCommit);
+
+
     Repository getRepository();
 
     void setRepository(@NotNull final Repository repository);
 
     PushEvent withRepository(@NotNull final Repository repository);
+
+
+    User getPusher();
+
+    void setPusher(@NotNull final User pusher);
+
+    PushEvent withPusher(@NotNull final User pusher);
+
+
+/*    Sender getSender();
+
+    void setSender(@NotNull final Sender sender);
+
+    PushEvent withSender(@NotNull final Sender sender); */
 }

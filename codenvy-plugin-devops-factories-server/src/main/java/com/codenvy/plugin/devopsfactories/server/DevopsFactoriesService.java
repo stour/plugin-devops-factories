@@ -66,7 +66,7 @@ public class DevopsFactoriesService extends Service {
                 + ", contribution.getRepository(): " + contribution.getRepository()
                 + ", contribution.getRepository().getUrl(): " + contribution.getRepository().getUrl()
                 + ", contribution.getRepository().getHtmlUrl(): " + contribution.getRepository().getHtmlUrl()
-                + ", contribution.getHead(): " + contribution.getHead());
+                + ", contribution.getHead(): " + contribution.getAfter());
 
         final String[] refSplit = contribution.getRef().split("/");
         final String branch = refSplit[refSplit.length - 1];
@@ -76,7 +76,7 @@ public class DevopsFactoriesService extends Service {
         final String repositoryName = repositoryUrlSplit[repositoryUrlSplit.length - 1];
         String repositoryHtmlUrl = "https://github.com/"
                 + repositoryUrlSplit[repositoryUrlSplit.length - 2] + "/" + repositoryUrlSplit[repositoryUrlSplit.length - 1];
-        final String commitId = contribution.getHead();
+        final String commitId = contribution.getAfter();
 
         final String factoryName = repositoryName + "--" + branch;
         LOG.info("factoryName: " + factoryName);

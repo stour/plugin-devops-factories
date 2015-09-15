@@ -20,11 +20,18 @@ import javax.validation.constraints.NotNull;
 
 @DTO
 public interface Commit {
-    String getSha();
+    String getId();
 
-    void setSha(@NotNull final String sha);
+    void setId(@NotNull final String id);
 
-    Commit withSha(@NotNull final String sha);
+    Commit withId(@NotNull final String id);
+
+
+    boolean getDistinct();
+
+    void setDistinct(@NotNull final boolean distinct);
+
+    Commit withDistinct(@NotNull final boolean distinct);
 
 
     String getMessage();
@@ -34,11 +41,11 @@ public interface Commit {
     Commit withMessage(@NotNull final String message);
 
 
-    Author getAuthor();
+    String getTimestamp();
 
-    void setAuthor(@NotNull final Author author);
+    void setTimestamp(@NotNull final String timestamp);
 
-    Commit withAuthor(@NotNull final Author author);
+    Commit withTimestamp(@NotNull final String timestamp);
 
 
     String getUrl();
@@ -48,9 +55,16 @@ public interface Commit {
     Commit withUrl(@NotNull final String url);
 
 
-    boolean getDistinct();
+    User getAuthor();
 
-    void setDistinct(@NotNull final boolean distinct);
+    void setAuthor(@NotNull final User author);
 
-    Commit withDistinct(@NotNull final boolean distinct);
+    Commit withAuthor(@NotNull final User author);
+
+
+    User getCommitter();
+
+    void setCommitter(@NotNull final User committer);
+
+    Commit withCommitter(@NotNull final User committer);
 }

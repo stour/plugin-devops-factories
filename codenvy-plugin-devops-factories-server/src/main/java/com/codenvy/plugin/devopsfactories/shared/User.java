@@ -18,17 +18,24 @@ import javax.validation.constraints.NotNull;
  * Created by stour on 09/09/15.
  */
 @DTO
-public interface Author {
+public interface User {
     String getName();
 
     void setName(@NotNull final String name);
 
-    Author withName(@NotNull final String name);
+    User withName(@NotNull final String name);
 
 
     String getEmail();
 
     void setEmail(@NotNull final String email);
 
-    Author withEmail(@NotNull final String email);
+    User withEmail(@NotNull final String email);
+
+
+    String getUsername();
+
+    void setUsername(@NotNull final String username);
+
+    User withUsername(@NotNull final String username);
 }
