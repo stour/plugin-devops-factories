@@ -120,6 +120,7 @@ public class FactoryConnection {
         ArrayList<Factory> factories = new ArrayList<>();
 
         if (factoryLinks != null) {
+            LOG.info("findMatchingFactories() found " + factoryLinks.size() + " factories");
             for (Link link : factoryLinks) {
                 String href = link.getHref();
                 String[] hrefSplit = href.split("/");
@@ -153,6 +154,7 @@ public class FactoryConnection {
                 }
             }
         }
+        LOG.info("findMatchingFactories() returned " + factories.size() + " factories");
         return factories;
     }
 

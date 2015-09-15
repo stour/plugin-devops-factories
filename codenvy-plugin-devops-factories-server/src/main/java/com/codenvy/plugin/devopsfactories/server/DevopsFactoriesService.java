@@ -61,6 +61,13 @@ public class DevopsFactoriesService extends Service {
                                   @Description("descriptor of contribution") PushEvent contribution)
             throws ConflictException, ForbiddenException, ServerException, NotFoundException {
 
+        // TODO remove temporary info logging
+        LOG.info("contribution.getRef(): " + contribution.getRef()
+                + ", contribution.getRepository(): " + contribution.getRepository()
+                + ", contribution.getRepository().getUrl(): " + contribution.getRepository().getUrl()
+                + ", contribution.getRepository().getHtmlUrl(): " + contribution.getRepository().getHtmlUrl()
+                + ", contribution.getHead(): " + contribution.getHead());
+
         final String[] refSplit = contribution.getRef().split("/");
         final String branch = refSplit[refSplit.length - 1];
         // TODO use repository.getHtmlUrl()
