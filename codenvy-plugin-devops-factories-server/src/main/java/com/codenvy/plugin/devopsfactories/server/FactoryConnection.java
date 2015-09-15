@@ -46,6 +46,7 @@ import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
+import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA_TYPE;
 import static javax.ws.rs.core.UriBuilder.fromUri;
 
 /**
@@ -232,7 +233,7 @@ public class FactoryConnection {
                 .register(MultiPartWriter.class).register(MultiPartReaderClientSide.class);
         WebTarget target = client.target(url);
         Response response = target.request().accept(APPLICATION_JSON)
-                .buildPost(Entity.entity(formDataMultiPart, MULTIPART_FORM_DATA)).invoke();
+                .buildPost(Entity.entity(formDataMultiPart, MULTIPART_FORM_DATA_TYPE)).invoke();
 
         if (response.getStatus() == 200) {
             String responseString = response.readEntity(String.class);
