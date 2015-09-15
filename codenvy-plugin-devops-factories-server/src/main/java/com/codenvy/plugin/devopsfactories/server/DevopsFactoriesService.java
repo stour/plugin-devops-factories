@@ -63,9 +63,12 @@ public class DevopsFactoriesService extends Service {
 
         final String[] refSplit = contribution.getRef().split("/");
         final String branch = refSplit[refSplit.length - 1];
-        final String repositoryUrl = contribution.getRepository().getHtmlUrl();
+        // TODO use repository.getHtmlUrl()
+        final String repositoryUrl = contribution.getRepository().getUrl();
         final String[] repositoryUrlSplit = repositoryUrl.split("/");
         final String repositoryName = repositoryUrlSplit[repositoryUrlSplit.length - 1];
+        String repositoryHtmlUrl = "https://github.com/"
+                + repositoryUrlSplit[repositoryUrlSplit.length - 2] + "/" + repositoryUrlSplit[repositoryUrlSplit.length - 1];
         final String commitId = contribution.getHead();
 
         final String factoryName = repositoryName + "--" + branch;
@@ -84,8 +87,8 @@ public class DevopsFactoriesService extends Service {
 
         } else if (factories.size() == 0) {
             // Generate new factory
-            LOG.info("factoryConnection.createNewFactory(" + factoryName + ", " + repositoryUrl + ", " + branch + ", " + commitId + ")");
-            factory = factoryConnection.createNewFactory(factoryName, repositoryUrl, branch, commitId);
+            LOG.info("factoryConnection.createNewFactory(" + factoryName + ", " + repositoryHtmlUrl + ", " + branch + ", " + commitId + ")");
+            factory = factoryConnection.createNewFactory(factoryName, repositoryHtmlUrl, branch, commitId);
 
         } else {
             LOG.error("findMatchingFactories(" + factoryName + ") found more than 1 factory !");
