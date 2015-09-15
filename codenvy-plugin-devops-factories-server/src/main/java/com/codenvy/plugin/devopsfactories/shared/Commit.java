@@ -12,8 +12,6 @@ package com.codenvy.plugin.devopsfactories.shared;
 
 import org.eclipse.che.dto.shared.DTO;
 
-import javax.validation.constraints.NotNull;
-
 /**
  * Created by stour on 09/09/15.
  */
@@ -22,49 +20,49 @@ import javax.validation.constraints.NotNull;
 public interface Commit {
     String getId();
 
-    void setId(@NotNull final String id);
+    void setId(final String id);
 
-    Commit withId(@NotNull final String id);
+    Commit withId(final String id);
 
 
     boolean getDistinct();
 
-    void setDistinct(@NotNull final boolean distinct);
+    void setDistinct(final boolean distinct);
 
-    Commit withDistinct(@NotNull final boolean distinct);
+    Commit withDistinct(final boolean distinct);
 
 
     String getMessage();
 
-    void setMessage(@NotNull final String message);
+    void setMessage(final String message);
 
-    Commit withMessage(@NotNull final String message);
+    Commit withMessage(final String message);
 
 
     String getTimestamp();
 
-    void setTimestamp(@NotNull final String timestamp);
+    void setTimestamp(final String timestamp);
 
-    Commit withTimestamp(@NotNull final String timestamp);
+    Commit withTimestamp(final String timestamp);
 
 
     String getUrl();
 
-    void setUrl(@NotNull final String url);
+    void setUrl(final String url);
 
-    Commit withUrl(@NotNull final String url);
+    Commit withUrl(final String url);
 
 
     User getAuthor();
 
-    void setAuthor(@NotNull final User author);
+    void setAuthor(final User author);
 
-    Commit withAuthor(@NotNull final User author);
+    Commit withAuthor(final User author);
 
 
     User getCommitter();
 
-    void setCommitter(@NotNull final User committer);
+    void setCommitter(final User committer);
 
-    Commit withCommitter(@NotNull final User committer);
+    Commit withCommitter(final User committer);
 }

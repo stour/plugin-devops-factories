@@ -12,7 +12,6 @@ package com.codenvy.plugin.devopsfactories.shared;
 
 import org.eclipse.che.dto.shared.DTO;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -24,91 +23,91 @@ public interface PushEvent {
 
     String getRef();
 
-    void setRef(@NotNull final String ref);
+    void setRef(final String ref);
 
-    PushEvent withRef(@NotNull final String ref);
+    PushEvent withRef(final String ref);
 
 
     String getBefore();
 
-    void setBefore(@NotNull final String before);
+    void setBefore(final String before);
 
-    PushEvent withBefore(@NotNull final String before);
+    PushEvent withBefore(final String before);
 
 
     String getAfter();
 
-    void setAfter(@NotNull final String after);
+    void setAfter(final String after);
 
-    PushEvent withAfter(@NotNull final String after);
+    PushEvent withAfter(final String after);
 
 
     boolean getCreated();
 
-    void setCreated(@NotNull final boolean created);
+    void setCreated(final boolean created);
 
-    PushEvent withCreated(@NotNull final boolean created);
+    PushEvent withCreated(final boolean created);
 
 
     boolean getDeleted();
 
-    void setDeleted(@NotNull final boolean deleted);
+    void setDeleted(final boolean deleted);
 
-    PushEvent withDeleted(@NotNull final boolean deleted);
+    PushEvent withDeleted(final boolean deleted);
 
 
     boolean getForced();
 
-    void setForced(@NotNull final boolean forced);
+    void setForced(final boolean forced);
 
-    PushEvent withForced(@NotNull final boolean forced);
+    PushEvent withForced(final boolean forced);
 
 
     String getBaseRef();
 
-    void setBaseRef(@NotNull final String baseRef);
+    void setBaseRef(final String baseRef);
 
-    PushEvent withBaseRef(@NotNull final String baseRef);
+    PushEvent withBaseRef(final String baseRef);
 
 
     String getCompare();
 
-    void setCompare(@NotNull final String compare);
+    void setCompare(final String compare);
 
-    PushEvent withCompare(@NotNull final String compare);
+    PushEvent withCompare(final String compare);
 
 
     List<Commit> getCommits();
 
-    void setCommits(@NotNull final List<Commit> commits);
+    void setCommits(final List<Commit> commits);
 
-    PushEvent withCommits(@NotNull final List<Commit> commits);
+    PushEvent withCommits(final List<Commit> commits);
 
 
     Commit getHeadCommit();
 
-    void setHeadCommit(@NotNull final Commit headCommit);
+    void setHeadCommit(final Commit headCommit);
 
-    PushEvent withHeadCommit(@NotNull final Commit headCommit);
+    PushEvent withHeadCommit(final Commit headCommit);
 
 
     Repository getRepository();
 
-    void setRepository(@NotNull final Repository repository);
+    void setRepository(final Repository repository);
 
-    PushEvent withRepository(@NotNull final Repository repository);
+    PushEvent withRepository(final Repository repository);
 
 
     User getPusher();
 
-    void setPusher(@NotNull final User pusher);
+    void setPusher(final User pusher);
 
-    PushEvent withPusher(@NotNull final User pusher);
+    PushEvent withPusher(final User pusher);
 
 
 /*    Sender getSender();
 
-    void setSender(@NotNull final Sender sender);
+    void setSender(final Sender sender);
 
-    PushEvent withSender(@NotNull final Sender sender); */
+    PushEvent withSender(final Sender sender); */
 }
