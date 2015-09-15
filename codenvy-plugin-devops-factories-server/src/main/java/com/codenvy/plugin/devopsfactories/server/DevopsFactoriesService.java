@@ -24,9 +24,10 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @Api(value = "/devops",
         description = "DevOps factories manager")
@@ -53,8 +54,8 @@ public class DevopsFactoriesService extends Service {
             @ApiResponse(code = 403, message = "Operation is forbidden")})
     @POST
     @Path("/github-webhook")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
     public Response githubWebhook(@ApiParam(value = "ID of workspace to consider", required = true)
                                   @PathParam("ws-id") String workspace,
                                   @ApiParam(value = "New contribution", required = true)

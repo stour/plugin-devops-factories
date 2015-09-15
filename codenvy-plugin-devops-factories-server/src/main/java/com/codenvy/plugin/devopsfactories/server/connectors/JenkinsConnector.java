@@ -17,8 +17,9 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 
 /**
  * Created by stour on 09/09/15.
@@ -51,7 +52,7 @@ public class JenkinsConnector implements Connector {
 
     private String getCurrentJenkinsJobConfiguration() {
         WebTarget target = client.target(jobConfigXmlUrl);
-        Response response = target.request(MediaType.APPLICATION_XML).get();
+        Response response = target.request(APPLICATION_XML).get();
         if (response.getStatus() == 200) {
             String responseString = response.readEntity(String.class);
             return responseString;
@@ -67,7 +68,7 @@ public class JenkinsConnector implements Connector {
                 "<description\\s?/>", "<description>" + factoryUrl + "</description>");
 
         WebTarget target = client.target(jobConfigXmlUrl);
-        Response response = target.request(MediaType.APPLICATION_XML).post(Entity.xml(updatedJobConfigXml));
+        Response response = target.request(APPLICATION_XML).post(Entity.xml(updatedJobConfigXml));
 
         if (response.getStatus() == 200) {
             LOG.info("factory link " + factoryUrl + " successfully added on description of Jenkins job " + jobName);
