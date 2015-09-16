@@ -49,7 +49,7 @@ public class JenkinsConnector implements Connector {
     private String getCurrentJenkinsJobConfiguration() {
         Client client = ClientBuilder.newClient();
         WebTarget target = client.target(jobConfigXmlUrl);
-        Invocation.Builder builder = target.request(APPLICATION_XML).header(HttpHeaders.CONTENT_TYPE, APPLICATION_XML);
+        Invocation.Builder builder = target.request(APPLICATION_XML);
         Response response = builder.get();
         if (response.getStatus() == 200) {
             String responseString = response.readEntity(String.class);

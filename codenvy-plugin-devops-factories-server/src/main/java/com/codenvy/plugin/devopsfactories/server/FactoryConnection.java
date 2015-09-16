@@ -229,7 +229,7 @@ public class FactoryConnection {
         Client client = ClientBuilder.newClient()
                 .register(MultiPartWriter.class).register(MultiPartReaderClientSide.class);
         WebTarget target = client.target(url);
-        Invocation.Builder builder = target.request().header(HttpHeaders.CONTENT_TYPE, MULTIPART_FORM_DATA).accept(APPLICATION_JSON);
+        Invocation.Builder builder = target.request(APPLICATION_JSON).header(HttpHeaders.CONTENT_TYPE, MULTIPART_FORM_DATA);
         Response response = builder.buildPost(Entity.entity(formDataMultiPart, MULTIPART_FORM_DATA)).invoke();
 
         if (response.getStatus() == 200) {
