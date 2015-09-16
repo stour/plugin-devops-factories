@@ -87,7 +87,7 @@ public class JenkinsConnector implements Connector {
 
     private void updateJenkinsJobDescription(String factoryUrl, Document configDocument, Node descriptionNode) {
         String descriptionContent = descriptionNode.getTextContent();
-        descriptionNode.setTextContent(descriptionContent + "\n" + factoryUrl);
+        descriptionNode.setTextContent(descriptionContent + "\n" + "<a href=\"" + factoryUrl + ">" + factoryUrl + "</a>");
         String updatedJobConfigXml = documentToXml(configDocument);
 
         Client client = ClientBuilder.newClient();
