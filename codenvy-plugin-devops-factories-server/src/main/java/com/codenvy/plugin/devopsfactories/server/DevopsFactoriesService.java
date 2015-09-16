@@ -12,8 +12,14 @@ package com.codenvy.plugin.devopsfactories.server;
 
 import com.codenvy.plugin.devopsfactories.server.connectors.JenkinsConnector;
 import com.codenvy.plugin.devopsfactories.shared.PushEvent;
-import com.wordnik.swagger.annotations.*;
+import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
+import com.wordnik.swagger.annotations.ApiParam;
+import com.wordnik.swagger.annotations.ApiResponse;
+import com.wordnik.swagger.annotations.ApiResponses;
 import org.eclipse.che.api.core.ConflictException;
+import org.eclipse.che.api.core.ForbiddenException;
+import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.core.rest.annotations.Description;
@@ -23,7 +29,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.ws.rs.*;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
@@ -49,13 +59,16 @@ public class DevopsFactoriesService extends Service {
 
     @ApiOperation(value = "Notify a new contribution on a GitHub project",
             response = Response.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "OK"),
-            @ApiResponse(code = 403, message = "Operation is forbidden")})
+    @ApiResponses({        @ApiResponse(
+            code = 200,
+            message = "OK"
+    ),         @ApiResponse(
+            code = 500,
+            message = "Internal Server Error"
+    )})
     @POST
     @Path("/github-webhook")
     @Consumes(APPLICATION_JSON)
-    @Produces(APPLICATION_JSON)
     public Response githubWebhook(@ApiParam(value = "ID of workspace to consider", required = true)
                                   @PathParam("ws-id") String workspace,
                                   @ApiParam(value = "New contribution", required = true)
