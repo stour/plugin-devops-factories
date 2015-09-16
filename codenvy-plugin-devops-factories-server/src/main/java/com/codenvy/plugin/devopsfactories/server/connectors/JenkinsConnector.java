@@ -64,8 +64,7 @@ public class JenkinsConnector implements Connector {
         Client client = ClientBuilder.newClient();
 
         String updatedJobConfigXml = jobConfigXml.replaceFirst(
-                "<description\\s?/>", "<description>" + factoryUrl + "</description>");
-
+                "(<description\\s?/>)|(<description></description>)", "<description>" + factoryUrl + "</description>");
         WebTarget target = client.target(jobConfigXmlUrl);
         Invocation.Builder builder = target.request(APPLICATION_XML).header(HttpHeaders.CONTENT_TYPE, APPLICATION_XML);
         Response response = builder.post(Entity.xml(updatedJobConfigXml));
