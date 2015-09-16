@@ -13,10 +13,8 @@ package com.codenvy.plugin.devopsfactories.server.connectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.client.*;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -30,12 +28,10 @@ public class JenkinsConnector implements Connector {
 
     private final String jobName;
     private final String jobConfigXmlUrl;
-    private final Client client;
 
     public JenkinsConnector(final String url, final String jobName) {
         this.jobName = jobName;
         this.jobConfigXmlUrl = url + "/job/" + jobName + "/config.xml";
-        this.client = ClientBuilder.newClient();
     }
 
     @Override
@@ -51,8 +47,10 @@ public class JenkinsConnector implements Connector {
     }
 
     private String getCurrentJenkinsJobConfiguration() {
+        Client client = ClientBuilder.newClient();
         WebTarget target = client.target(jobConfigXmlUrl);
-        Response response = target.request(APPLICATION_XML).get();
+        Invocation.Builder builder = target.request(APPLICATION_XML).header(HttpHeaders.CONTENT_TYPE, APPLICATION_XML);
+        Response response = builder.get();
         if (response.getStatus() == 200) {
             String responseString = response.readEntity(String.class);
             return responseString;
@@ -63,12 +61,14 @@ public class JenkinsConnector implements Connector {
     }
 
     private void updateJenkinsJobDescription(String factoryUrl, String jobConfigXml) {
+        Client client = ClientBuilder.newClient();
 
         String updatedJobConfigXml = jobConfigXml.replaceFirst(
                 "<description\\s?/>", "<description>" + factoryUrl + "</description>");
 
         WebTarget target = client.target(jobConfigXmlUrl);
-        Response response = target.request(APPLICATION_XML).post(Entity.xml(updatedJobConfigXml));
+        Invocation.Builder builder = target.request(APPLICATION_XML).header(HttpHeaders.CONTENT_TYPE, APPLICATION_XML);
+        Response response = builder.post(Entity.xml(updatedJobConfigXml));
 
         if (response.getStatus() == 200) {
             LOG.info("factory link " + factoryUrl + " successfully added on description of Jenkins job " + jobName);

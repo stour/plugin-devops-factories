@@ -33,10 +33,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.client.*;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -231,8 +229,8 @@ public class FactoryConnection {
         Client client = ClientBuilder.newClient()
                 .register(MultiPartWriter.class).register(MultiPartReaderClientSide.class);
         WebTarget target = client.target(url);
-        Response response = target.request().accept(APPLICATION_JSON)
-                .buildPost(Entity.entity(formDataMultiPart, MULTIPART_FORM_DATA)).invoke();
+        Invocation.Builder builder = target.request().header(HttpHeaders.CONTENT_TYPE, MULTIPART_FORM_DATA).accept(APPLICATION_JSON);
+        Response response = builder.buildPost(Entity.entity(formDataMultiPart, MULTIPART_FORM_DATA)).invoke();
 
         if (response.getStatus() == 200) {
             String responseString = response.readEntity(String.class);
