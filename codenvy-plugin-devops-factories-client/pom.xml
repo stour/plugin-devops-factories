@@ -22,7 +22,7 @@
         <artifactId>codenvy-plugin-devops-factories-parent</artifactId>
         <groupId>com.codenvy.plugin</groupId>
         <version>3.12.3-SNAPSHOT</version>
-	<relativePath>../pom.xml</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>codenvy-plugin-factories-mgt-client</artifactId>
     <name>Codenvy Plugin :: DevOps Factories :: Client</name>
