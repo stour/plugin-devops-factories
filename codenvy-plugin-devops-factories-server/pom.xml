@@ -64,11 +64,94 @@
             <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-client</artifactId>
             <version>2.6</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>jersey-common</artifactId>
+                    <groupId>org.glassfish.jersey.core</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>javax.ws.rs-api</artifactId>
+                    <groupId>javax.ws.rs</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-common</artifactId>
+            <version>2.6</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>javax.ws.rs-api</artifactId>
+                    <groupId>javax.ws.rs</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>javax.annotation-api</artifactId>
+                    <groupId>javax.annotation</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>org.osgi.core</artifactId>
+                    <groupId>org.osgi</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jaxb-api</artifactId>
+                    <groupId>javax.xml.bind</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>hk2-api</artifactId>
+                    <groupId>org.glassfish.hk2</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>javax.inject</artifactId>
+                    <groupId>org.glassfish.hk2.external</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>hk2-locator</artifactId>
+                    <groupId>org.glassfish.hk2</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>osgi-resource-locator</artifactId>
+                    <groupId>org.glassfish.hk2</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-multipart</artifactId>
             <version>2.6</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>javax.inject</artifactId>
+                    <groupId>org.glassfish.hk2.external</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jersey-server</artifactId>
+                    <groupId>org.glassfish.jersey.core</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jersey-client</artifactId>
+                    <groupId>org.glassfish.jersey.core</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jersey-container-grizzly2-servlet</artifactId>
+                    <groupId>org.glassfish.jersey.containers</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jersey-apache-connector</artifactId>
+                    <groupId>org.glassfish.jersey.connectors</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jersey-grizzly-connector</artifactId>
+                    <groupId>org.glassfish.jersey.connectors</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jersey-jetty-connector</artifactId>
+                    <groupId>org.glassfish.jersey.connectors</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jaxb-impl</artifactId>
+                    <groupId>com.sun.xml.bind</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
