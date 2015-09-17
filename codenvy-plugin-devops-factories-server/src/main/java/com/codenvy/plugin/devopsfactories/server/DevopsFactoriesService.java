@@ -75,12 +75,9 @@ public class DevopsFactoriesService extends Service {
                                   @Description("descriptor of contribution") PushEvent contribution)
             throws ConflictException, ForbiddenException, ServerException, NotFoundException {
 
-        // TODO remove temporary info logging
-        LOG.info("contribution.getRef(): " + contribution.getRef()
-                + ", contribution.getRepository(): " + contribution.getRepository()
-                + ", contribution.getRepository().getUrl(): " + contribution.getRepository().getUrl()
+        LOG.debug("contribution.getRef(): " + contribution.getRef()
                 + ", contribution.getRepository().getHtmlUrl(): " + contribution.getRepository().getHtmlUrl()
-                + ", contribution.getHead(): " + contribution.getAfter());
+                + ", contribution.getAfter(): " + contribution.getAfter());
 
         final String[] refSplit = contribution.getRef().split("/");
         final String branch = refSplit[refSplit.length - 1];
@@ -93,7 +90,6 @@ public class DevopsFactoriesService extends Service {
         final String commitId = contribution.getAfter();
 
         final String factoryName = repositoryName + "--" + branch;
-        LOG.info("factoryName: " + factoryName);
 
         List<Factory> factories = factoryConnection.findMatchingFactories(factoryName);
 
@@ -103,12 +99,12 @@ public class DevopsFactoriesService extends Service {
         } else if (factories.size() == 1) {
             // Update existing factory
             Factory oldFactory = factories.get(0);
-            LOG.info("factoryConnection.updateFactory(" + oldFactory + ", " + commitId + ")");
+            LOG.debug("factoryConnection.updateFactory(" + oldFactory + ", " + commitId + ")");
             factory = factoryConnection.updateFactory(oldFactory, commitId);
 
         } else if (factories.size() == 0) {
             // Generate new factory
-            LOG.info("factoryConnection.createNewFactory(" + factoryName + ", " + repositoryHtmlUrl + ", " + branch + ", " + commitId + ")");
+            LOG.debug("factoryConnection.createNewFactory(" + factoryName + ", " + repositoryHtmlUrl + ", " + branch + ", " + commitId + ")");
             factory = factoryConnection.createNewFactory(factoryName, repositoryHtmlUrl, branch, commitId);
 
         } else {

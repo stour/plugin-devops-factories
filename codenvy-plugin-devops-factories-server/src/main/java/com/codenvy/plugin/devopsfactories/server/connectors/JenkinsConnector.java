@@ -66,7 +66,7 @@ public class JenkinsConnector implements Connector {
             if (!descriptionNode.getTextContent().contains(factoryUrl)) {
                 updateJenkinsJobDescription(factoryUrl, configDocument, descriptionNode);
             } else {
-                LOG.info("factory link " + factoryUrl + " already displayed on description of Jenkins job " + jobName);
+                LOG.debug("factory link " + factoryUrl + " already displayed on description of Jenkins job " + jobName);
             }
         }
     }
@@ -96,7 +96,7 @@ public class JenkinsConnector implements Connector {
         Response response = builder.post(Entity.xml(updatedJobConfigXml));
 
         if (response.getStatus() == 200) {
-            LOG.info("factory link " + factoryUrl + " successfully added on description of Jenkins job " + jobName);
+            LOG.debug("factory link " + factoryUrl + " successfully added on description of Jenkins job " + jobName);
         } else {
             LOG.error(response.getStatus() + " - " + response.readEntity(String.class));
         }

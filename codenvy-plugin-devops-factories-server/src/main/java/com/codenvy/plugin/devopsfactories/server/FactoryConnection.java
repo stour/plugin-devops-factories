@@ -68,7 +68,7 @@ public class FactoryConnection {
             userToken = HttpJsonHelper.post(Token.class, url, DtoFactory.getInstance().createDtoFromJson(myCredentials, Credentials.class));
 
             if (userToken != null) {
-                LOG.info("successfully authenticated with token " + userToken);
+                LOG.debug("successfully authenticated with token " + userToken);
             }
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
@@ -118,7 +118,7 @@ public class FactoryConnection {
         ArrayList<Factory> factories = new ArrayList<>();
 
         if (factoryLinks != null) {
-            LOG.info("findMatchingFactories() found " + factoryLinks.size() + " factories");
+            LOG.debug("findMatchingFactories() found " + factoryLinks.size() + " factories");
             for (Link link : factoryLinks) {
                 String href = link.getHref();
                 String[] hrefSplit = href.split("/");
@@ -126,7 +126,7 @@ public class FactoryConnection {
 
                 String url1 = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "getFactory")
                         .build(factoryId).toString();
-                LOG.info("getFactory: " + url1);
+                LOG.debug("getFactory: " + url1);
 
                 try {
                     Factory factory;
@@ -152,7 +152,7 @@ public class FactoryConnection {
                 }
             }
         }
-        LOG.info("findMatchingFactories() returned " + factories.size() + " factories");
+        LOG.debug("findMatchingFactories() returned " + factories.size() + " factories");
         return factories;
     }
 
