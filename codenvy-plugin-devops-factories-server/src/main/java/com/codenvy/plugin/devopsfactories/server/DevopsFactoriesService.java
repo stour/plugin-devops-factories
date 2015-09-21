@@ -36,6 +36,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -158,7 +159,7 @@ public class DevopsFactoriesService extends Service {
         String currentRelativePathString = currentRelativePath.toAbsolutePath().toString();
         URL configPath = null;
         try {
-            configPath = new URL(currentRelativePathString);
+            configPath = new File(currentRelativePathString).toURI().toURL();
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
