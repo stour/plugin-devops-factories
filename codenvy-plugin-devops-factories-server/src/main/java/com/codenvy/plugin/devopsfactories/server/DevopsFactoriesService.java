@@ -97,9 +97,7 @@ public class DevopsFactoriesService extends Service {
         List<Factory> factories = factoryConnection.findMatchingFactories(factoryName);
 
         Factory factory = null;
-        if (factories == null) {
-            LOG.error("factoryConnection.findMatchingFactories(" + factoryName + ") returned null");
-        } else if (factories.size() == 1) {
+        if (factories.size() == 1) {
             // Update existing factory
             Factory oldFactory = factories.get(0);
             LOG.debug("factoryConnection.updateFactory(" + oldFactory + ", " + commitId + ")");
