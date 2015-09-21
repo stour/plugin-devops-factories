@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.codenvy.plugin.devopsfactories.server;
 
+import com.codenvy.plugin.devopsfactories.server.connectors.Connector;
 import com.codenvy.plugin.devopsfactories.server.connectors.JenkinsConnector;
 import com.codenvy.plugin.devopsfactories.shared.PushEvent;
 import com.wordnik.swagger.annotations.Api;
@@ -35,7 +36,13 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
@@ -47,14 +54,10 @@ public class DevopsFactoriesService extends Service {
     private static final Logger LOG = LoggerFactory.getLogger(DevopsFactoriesService.class);
 
     private final FactoryConnection factoryConnection;
-    private final JenkinsConnector jenkinsConnector;
 
     @Inject
     public DevopsFactoriesService(final FactoryConnection factoryConnection) {
         this.factoryConnection = factoryConnection;
-
-        // TODO add UI to configure + enable/disable new connectors
-        jenkinsConnector = new JenkinsConnector("http://runnerp13.codenvycorp.com:61617", "desktop-console-java");
     }
 
     @ApiOperation(value = "Notify a new contribution on a GitHub project",
@@ -115,9 +118,64 @@ public class DevopsFactoriesService extends Service {
             List<Link> factoryLinks = factory.getLinks();
             final String factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
             if (factoryUrl != null) {
-                jenkinsConnector.addFactoryLink(factoryUrl);
+                List<Connector> connectors = getConnectors();
+                connectors.forEach(connector -> { connector.addFactoryLink(factoryUrl); } );
             }
         }
         return Response.ok().build();
+    }
+
+    private List<Connector> getConnectors() {
+        List<Connector> connectors = new ArrayList<>();
+        Properties connectorsProperties = getConnectorsProperties();
+        if (connectorsProperties != null) {
+            Set<String> keySet = connectorsProperties.stringPropertyNames();
+            keySet.forEach(key -> {
+                String value = connectorsProperties.getProperty(key);
+                String[] valueSplit = value.split(",");
+                switch (valueSplit[0]) {
+                    case "jenkins" :
+                        JenkinsConnector jenkinsConnector = new JenkinsConnector(valueSplit[1], valueSplit[2]);
+                        connectors.add(jenkinsConnector);
+                        LOG.debug("new JenkinsConnector(" + valueSplit[1] + ", " + valueSplit[2] + ")");
+                        break;
+                    case "github" :
+                        LOG.debug("Object GitHub connector not implemented !");
+                        break;
+                    case "jira" :
+                        LOG.debug("Object JIRA connector not implemented !");
+                        break;
+                    default :
+                        break;
+                }
+            } );
+        }
+        return connectors;
+    }
+
+    private Properties getConnectorsProperties() {
+        URL configPath = getClass().getResource("/connectors.properties");
+        if (configPath != null) {
+            InputStream is = null;
+            try {
+                is = configPath.openStream();
+                if (is != null) {
+                    Properties connectorsProperties = new Properties();
+                    connectorsProperties.load(is);
+                    return connectorsProperties;
+                }
+            } catch (IOException e) {
+                LOG.error(e.getMessage(), e);
+            } finally {
+                try {
+                    if (is != null) {
+                        is.close();
+                    }
+                } catch (IOException e) {
+                    LOG.error(e.getMessage(), e);
+                }
+            }
+        }
+        return null;
     }
 }
