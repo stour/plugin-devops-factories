@@ -38,7 +38,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -152,7 +154,14 @@ public class DevopsFactoriesService extends Service {
     }
 
     private Properties getConnectorsProperties() {
-        URL configPath = getClass().getResource("/connectors.properties");
+        java.nio.file.Path currentRelativePath = Paths.get("", "connectors.properties");
+        String currentRelativePathString = currentRelativePath.toAbsolutePath().toString();
+        URL configPath = null;
+        try {
+            configPath = new URL(currentRelativePathString);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
         if (configPath != null) {
             InputStream is = null;
             try {
