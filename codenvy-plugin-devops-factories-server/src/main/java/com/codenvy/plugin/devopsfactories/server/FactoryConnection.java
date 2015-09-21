@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
@@ -247,14 +248,8 @@ public class FactoryConnection {
     }
 
     public static String getFactoryUrl(final List<Link> factoryLinks) {
-        String factoryUrl = null;
-        Iterator iter = factoryLinks.iterator();
-        while (iter.hasNext()) {
-            Link link = (Link)iter.next();
-            if (link.getRel().equals("create-project")) {
-                factoryUrl = link.getHref();
-            }
-        }
-        return factoryUrl;
+        List<Link> createProjectLinks = factoryLinks.stream()
+                .filter(link -> link.getRel().equals("create-project")).collect(Collectors.toList());
+        return createProjectLinks.get(0).getHref();
     }
 }
