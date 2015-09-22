@@ -71,7 +71,7 @@ public class JenkinsConnector implements Connector {
         }
     }
 
-    private String getCurrentJenkinsJobConfiguration() {
+    protected String getCurrentJenkinsJobConfiguration() {
         Client client = ClientBuilder.newClient();
         WebTarget target = client.target(jobConfigXmlUrl);
         Invocation.Builder builder = target.request(APPLICATION_XML);
@@ -85,7 +85,7 @@ public class JenkinsConnector implements Connector {
         }
     }
 
-    private void updateJenkinsJobDescription(String factoryUrl, Document configDocument, Node descriptionNode) {
+    protected void updateJenkinsJobDescription(String factoryUrl, Document configDocument, Node descriptionNode) {
         String descriptionContent = descriptionNode.getTextContent();
         descriptionNode.setTextContent(descriptionContent + "\n" + "<a href=\"" + factoryUrl + "\">" + factoryUrl + "</a>");
         String updatedJobConfigXml = documentToXml(configDocument);
@@ -102,7 +102,7 @@ public class JenkinsConnector implements Connector {
         }
     }
 
-    private String documentToXml(Document configDocument) {
+    protected String documentToXml(Document configDocument) {
         DOMSource domSource = new DOMSource(configDocument);
         StringWriter writer = new StringWriter();
         StreamResult result = new StreamResult(writer);
@@ -119,7 +119,7 @@ public class JenkinsConnector implements Connector {
         return writer.toString();
     }
 
-    private Document xmlToDocument(String jobConfigXml) {
+    protected Document xmlToDocument(String jobConfigXml) {
         Document document = null;
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

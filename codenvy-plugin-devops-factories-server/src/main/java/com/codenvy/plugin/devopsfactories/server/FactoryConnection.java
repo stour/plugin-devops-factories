@@ -68,7 +68,7 @@ public class FactoryConnection {
         userToken = authenticateUser(credentials.first, credentials.second);
     }
 
-    private Token authenticateUser(String username, String password) {
+    protected Token authenticateUser(String username, String password) {
         Token userToken = null;
         // Authenticate on Codenvy
         String url = fromUri(baseUrl).path(AuthenticationService.class).path(AuthenticationService.class, "authenticate")
