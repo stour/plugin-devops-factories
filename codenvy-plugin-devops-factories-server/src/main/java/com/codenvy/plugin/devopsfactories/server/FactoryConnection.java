@@ -42,7 +42,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -65,11 +64,16 @@ public class FactoryConnection {
     public FactoryConnection(@Named("api.endpoint") String baseUrl) {
         this.baseUrl = baseUrl;
 
+        userToken = authenticateUser("stephane.tournie@serli.com", "stephane2015");
+    }
+
+    private Token authenticateUser(String username, String password) {
+        Token userToken = null;
         // Authenticate on Codenvy
         String url = fromUri(baseUrl).path(AuthenticationService.class).path(AuthenticationService.class, "authenticate")
                 .build().toString();
         try {
-            String myCredentials = "{ \"username\": \"stephane.tournie@serli.com\", \"password\": \"stephane2015\" }";
+            String myCredentials = "{ \"username\": \"" + username + "\", \"password\": \"" + password + "\" }";
             userToken = HttpJsonHelper.post(Token.class, url, DtoFactory.getInstance().createDtoFromJson(myCredentials, Credentials.class));
 
             if (userToken != null) {
@@ -87,6 +91,8 @@ public class FactoryConnection {
             LOG.error(e.getMessage(), e);
         } catch (ConflictException e) {
             LOG.error(e.getMessage(), e);
+        } finally {
+            return userToken;
         }
     }
 
