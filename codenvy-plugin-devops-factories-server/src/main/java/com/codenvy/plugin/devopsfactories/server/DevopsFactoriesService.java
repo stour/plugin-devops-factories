@@ -143,21 +143,21 @@ public class DevopsFactoriesService extends Service {
                 String value = connectorsProperties.get().getProperty(key);
                 String[] valueSplit = value.split(",");
                 switch (valueSplit[0]) {
-                    case "jenkins" :
+                    case "jenkins":
                         JenkinsConnector jenkinsConnector = new JenkinsConnector(valueSplit[1], valueSplit[2]);
                         connectors.add(jenkinsConnector);
                         LOG.debug("new JenkinsConnector(" + valueSplit[1] + ", " + valueSplit[2] + ")");
                         break;
-                    case "github" :
+                    case "github":
                         LOG.debug("Object GitHub connector not implemented !");
                         break;
-                    case "jira" :
+                    case "jira":
                         LOG.debug("Object JIRA connector not implemented !");
                         break;
-                    default :
+                    default:
                         break;
                 }
-            } );
+            });
         }
         return connectors;
     }
