@@ -26,6 +26,7 @@ import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.core.rest.annotations.Description;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.factory.dto.Factory;
+import org.eclipse.che.commons.lang.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +56,8 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 public class DevopsFactoriesService extends Service {
 
     private static final Logger LOG = LoggerFactory.getLogger(DevopsFactoriesService.class);
+    private static final String CONNECTORS_PROPERTIES_FILENAME = "connectors.properties";
+    private static final String CREDENTIALS_PROPERTIES_FILENAME = "credentials.properties";
 
     private final FactoryConnection factoryConnection;
 
@@ -126,9 +129,9 @@ public class DevopsFactoriesService extends Service {
         return Response.ok().build();
     }
 
-    private List<Connector> getConnectors() {
+    public static List<Connector> getConnectors() {
         List<Connector> connectors = new ArrayList<>();
-        Properties connectorsProperties = getConnectorsProperties();
+        Properties connectorsProperties = getProperties(CONNECTORS_PROPERTIES_FILENAME);
         if (connectorsProperties != null) {
             Set<String> keySet = connectorsProperties.stringPropertyNames();
             keySet.forEach(key -> {
@@ -154,8 +157,30 @@ public class DevopsFactoriesService extends Service {
         return connectors;
     }
 
-    private Properties getConnectorsProperties() {
-        java.nio.file.Path currentRelativePath = Paths.get("", "connectors.properties");
+    public static Pair<String, String> getCredentials() {
+        String[] credentials = new String[2];
+        Properties credentialsProperties = getProperties(CREDENTIALS_PROPERTIES_FILENAME);
+        if (credentialsProperties != null) {
+            Set<String> keySet = credentialsProperties.stringPropertyNames();
+            keySet.forEach(key -> {
+                String value = credentialsProperties.getProperty(key);
+                switch (key) {
+                    case "username":
+                        credentials[0] = value;
+                        break;
+                    case "password":
+                        credentials[1] = value;
+                        break;
+                    default:
+                        break;
+                }
+            });
+        }
+        return Pair.of(credentials[0], credentials[1]);
+    }
+
+    public static Properties getProperties(String fileName) {
+        java.nio.file.Path currentRelativePath = Paths.get("", fileName);
         String currentRelativePathString = currentRelativePath.toAbsolutePath().toString();
         URL configPath = null;
         try {
@@ -168,9 +193,9 @@ public class DevopsFactoriesService extends Service {
             try {
                 is = configPath.openStream();
                 if (is != null) {
-                    Properties connectorsProperties = new Properties();
-                    connectorsProperties.load(is);
-                    return connectorsProperties;
+                    Properties properties = new Properties();
+                    properties.load(is);
+                    return properties;
                 }
             } catch (IOException e) {
                 LOG.error(e.getMessage(), e);

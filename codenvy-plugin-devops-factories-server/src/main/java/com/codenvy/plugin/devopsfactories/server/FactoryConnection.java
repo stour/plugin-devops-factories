@@ -64,7 +64,8 @@ public class FactoryConnection {
     public FactoryConnection(@Named("api.endpoint") String baseUrl) {
         this.baseUrl = baseUrl;
 
-        userToken = authenticateUser("stephane.tournie@serli.com", "stephane2015");
+        Pair<String, String> credentials = DevopsFactoriesService.getCredentials();
+        userToken = authenticateUser(credentials.first, credentials.second);
     }
 
     private Token authenticateUser(String username, String password) {
