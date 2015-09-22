@@ -126,19 +126,20 @@ public class DevopsFactoriesService extends Service {
             Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
 
             // Get connectors & provide them factory link to display
-            List<Connector> connectors = getConnectors();
+            List<Connector> connectors = getConnectors(factoryName);
             factoryUrl.ifPresent(
                     url -> connectors.forEach(connector -> connector.addFactoryLink(url) ));
         }
         return Response.ok().build();
     }
 
-    public static List<Connector> getConnectors() {
+    public static List<Connector> getConnectors(String factoryName) {
         List<Connector> connectors = new ArrayList<>();
         Optional<Properties> connectorsProperties = Optional.ofNullable(getProperties(CONNECTORS_PROPERTIES_FILENAME));
         if (connectorsProperties.isPresent()) {
             Set<String> keySet = connectorsProperties.get().stringPropertyNames();
-            keySet.forEach(key -> {
+            keySet.stream().filter(key -> factoryName.equals(connectorsProperties.get().getProperty(key)
+                    .split(",")[0])).forEach(key -> {
                 String value = connectorsProperties.get().getProperty(key);
                 String[] valueSplit = value.split(",");
                 switch (valueSplit[0]) {
