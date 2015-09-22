@@ -127,45 +127,49 @@ public class FactoryConnection {
             LOG.error(e.getMessage(), e);
         }
 
-        // Get factories by IDs
-        ArrayList<Factory> factories = new ArrayList<>();
+        if (factoryLinks != null) {
+            // Get factories by IDs
+            ArrayList<Factory> factories = new ArrayList<>();
 
-        LOG.debug("findMatchingFactories() found " + factoryLinks.size() + " factories");
-        for (Link link : factoryLinks) {
-            String href = link.getHref();
-            String[] hrefSplit = href.split("/");
-            String factoryId = hrefSplit[hrefSplit.length - 1];
+            LOG.debug("findMatchingFactories() found " + factoryLinks.size() + " factories");
+            for (Link link : factoryLinks) {
+                String href = link.getHref();
+                String[] hrefSplit = href.split("/");
+                String factoryId = hrefSplit[hrefSplit.length - 1];
 
-            String url1 = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "getFactory")
-                    .build(factoryId).toString();
-            LOG.debug("getFactory: " + url1);
+                String url1 = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "getFactory")
+                        .build(factoryId).toString();
+                LOG.debug("getFactory: " + url1);
 
-            try {
-                Factory factory;
-                if (userToken.isPresent()) {
-                    Token token = userToken.get();
-                    Pair tokenParam = Pair.of("token", token.getValue());
-                    factory = HttpJsonHelper.get(Factory.class, url1, tokenParam);
-                } else {
-                    factory = HttpJsonHelper.get(Factory.class, url1);
+                try {
+                    Factory factory;
+                    if (userToken.isPresent()) {
+                        Token token = userToken.get();
+                        Pair tokenParam = Pair.of("token", token.getValue());
+                        factory = HttpJsonHelper.get(Factory.class, url1, tokenParam);
+                    } else {
+                        factory = HttpJsonHelper.get(Factory.class, url1);
+                    }
+                    factories.add(factory);
+                } catch (IOException e) {
+                    LOG.error(e.getMessage(), e);
+                } catch (ServerException e) {
+                    LOG.error(e.getMessage(), e);
+                } catch (UnauthorizedException e) {
+                    LOG.error(e.getMessage(), e);
+                } catch (ForbiddenException e) {
+                    LOG.error(e.getMessage(), e);
+                } catch (NotFoundException e) {
+                    LOG.error(e.getMessage(), e);
+                } catch (ConflictException e) {
+                    LOG.error(e.getMessage(), e);
                 }
-                factories.add(factory);
-            } catch (IOException e) {
-                LOG.error(e.getMessage(), e);
-            } catch (ServerException e) {
-                LOG.error(e.getMessage(), e);
-            } catch (UnauthorizedException e) {
-                LOG.error(e.getMessage(), e);
-            } catch (ForbiddenException e) {
-                LOG.error(e.getMessage(), e);
-            } catch (NotFoundException e) {
-                LOG.error(e.getMessage(), e);
-            } catch (ConflictException e) {
-                LOG.error(e.getMessage(), e);
             }
+            LOG.debug("findMatchingFactories() returned " + factories.size() + " factories");
+            return factories;
         }
-        LOG.debug("findMatchingFactories() returned " + factories.size() + " factories");
-        return factories;
+
+        return null;
     }
 
     public Factory updateFactory(Factory oldFactory, String commidId) {
