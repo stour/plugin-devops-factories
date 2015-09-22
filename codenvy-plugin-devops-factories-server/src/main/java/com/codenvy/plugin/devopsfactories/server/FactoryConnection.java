@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -58,14 +59,14 @@ public class FactoryConnection {
     private static final Logger LOG = LoggerFactory.getLogger(FactoryConnection.class);
 
     private final String baseUrl;
-    private Token userToken;
+    private Optional<Token> userToken;
 
     @Inject
     public FactoryConnection(@Named("api.endpoint") String baseUrl) {
         this.baseUrl = baseUrl;
 
         Pair<String, String> credentials = DevopsFactoriesService.getCredentials();
-        userToken = authenticateUser(credentials.first, credentials.second);
+        userToken = Optional.ofNullable(authenticateUser(credentials.first, credentials.second));
     }
 
     protected Token authenticateUser(String username, String password) {
@@ -76,10 +77,6 @@ public class FactoryConnection {
         try {
             String myCredentials = "{ \"username\": \"" + username + "\", \"password\": \"" + password + "\" }";
             userToken = HttpJsonHelper.post(Token.class, url, DtoFactory.getInstance().createDtoFromJson(myCredentials, Credentials.class));
-
-            if (userToken != null) {
-                LOG.debug("successfully authenticated with token " + userToken);
-            }
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
         } catch (ServerException e) {
@@ -93,21 +90,25 @@ public class FactoryConnection {
         } catch (ConflictException e) {
             LOG.error(e.getMessage(), e);
         } finally {
+            if (userToken != null) {
+                LOG.debug("successfully authenticated with token " + userToken);
+            }
             return userToken;
         }
     }
 
     public List<Factory> findMatchingFactories(String factoryName) {
+        List<Link> factoryLinks = null;
         Pair factoryNameParam = Pair.of("project.name", factoryName);
 
         // Check if factories exist for the given attributes
         String url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "getFactoryByAttribute")
                 .build().toString();
-        List<Link> factoryLinks = null;
         Link lUrl = DtoFactory.newDto(Link.class).withHref(url).withMethod("GET");
         try {
-            if (userToken != null) {
-                Pair tokenParam = Pair.of("token", userToken.getValue());
+            if (userToken.isPresent()) {
+                Token token = userToken.get();
+                Pair tokenParam = Pair.of("token", token.getValue());
                 factoryLinks = HttpJsonHelper.requestArray(Link.class, lUrl, factoryNameParam, tokenParam);
             } else {
                 factoryLinks = HttpJsonHelper.requestArray(Link.class, lUrl, factoryNameParam);
@@ -129,39 +130,38 @@ public class FactoryConnection {
         // Get factories by IDs
         ArrayList<Factory> factories = new ArrayList<>();
 
-        if (factoryLinks != null) {
-            LOG.debug("findMatchingFactories() found " + factoryLinks.size() + " factories");
-            for (Link link : factoryLinks) {
-                String href = link.getHref();
-                String[] hrefSplit = href.split("/");
-                String factoryId = hrefSplit[hrefSplit.length-1];
+        LOG.debug("findMatchingFactories() found " + factoryLinks.size() + " factories");
+        for (Link link : factoryLinks) {
+            String href = link.getHref();
+            String[] hrefSplit = href.split("/");
+            String factoryId = hrefSplit[hrefSplit.length - 1];
 
-                String url1 = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "getFactory")
-                        .build(factoryId).toString();
-                LOG.debug("getFactory: " + url1);
+            String url1 = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "getFactory")
+                    .build(factoryId).toString();
+            LOG.debug("getFactory: " + url1);
 
-                try {
-                    Factory factory;
-                    if (userToken != null) {
-                        Pair tokenParam = Pair.of("token", userToken.getValue());
-                        factory = HttpJsonHelper.get(Factory.class, url1, tokenParam);
-                    } else {
-                        factory = HttpJsonHelper.get(Factory.class, url1);
-                    }
-                    factories.add(factory);
-                } catch (IOException e) {
-                    LOG.error(e.getMessage(), e);
-                } catch (ServerException e) {
-                    LOG.error(e.getMessage(), e);
-                } catch (UnauthorizedException e) {
-                    LOG.error(e.getMessage(), e);
-                } catch (ForbiddenException e) {
-                    LOG.error(e.getMessage(), e);
-                } catch (NotFoundException e) {
-                    LOG.error(e.getMessage(), e);
-                } catch (ConflictException e) {
-                    LOG.error(e.getMessage(), e);
+            try {
+                Factory factory;
+                if (userToken.isPresent()) {
+                    Token token = userToken.get();
+                    Pair tokenParam = Pair.of("token", token.getValue());
+                    factory = HttpJsonHelper.get(Factory.class, url1, tokenParam);
+                } else {
+                    factory = HttpJsonHelper.get(Factory.class, url1);
                 }
+                factories.add(factory);
+            } catch (IOException e) {
+                LOG.error(e.getMessage(), e);
+            } catch (ServerException e) {
+                LOG.error(e.getMessage(), e);
+            } catch (UnauthorizedException e) {
+                LOG.error(e.getMessage(), e);
+            } catch (ForbiddenException e) {
+                LOG.error(e.getMessage(), e);
+            } catch (NotFoundException e) {
+                LOG.error(e.getMessage(), e);
+            } catch (ConflictException e) {
+                LOG.error(e.getMessage(), e);
             }
         }
         LOG.debug("findMatchingFactories() returned " + factories.size() + " factories");
@@ -190,8 +190,9 @@ public class FactoryConnection {
 
         Factory newFactory = null;
         try {
-            if (userToken != null) {
-                Pair tokenParam = Pair.of("token", userToken.getValue());
+            if (userToken.isPresent()) {
+                Token token = userToken.get();
+                Pair tokenParam = Pair.of("token", token.getValue());
                 newFactory = HttpJsonHelper.put(Factory.class, url, updatedFactory, tokenParam);
             } else {
                 newFactory = HttpJsonHelper.put(Factory.class, url, updatedFactory);
@@ -227,9 +228,10 @@ public class FactoryConnection {
 
         // Create factory
         String url;
-        if (userToken != null) {
+        if (userToken.isPresent()) {
+            Token token = userToken.get();
             url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "saveFactory")
-                    .queryParam("token", userToken.getValue()).build().toString();
+                    .queryParam("token", token.getValue()).build().toString();
         } else {
             url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "saveFactory").build().toString();
         }
@@ -254,9 +256,9 @@ public class FactoryConnection {
         return newFactory;
     }
 
-    public static String getFactoryUrl(final List<Link> factoryLinks) {
+    public static Optional<String> getFactoryUrl(final List<Link> factoryLinks) {
         List<Link> createProjectLinks = factoryLinks.stream()
-                .filter(link -> link.getRel().equals("create-project")).collect(Collectors.toList());
-        return createProjectLinks.get(0).getHref();
+                .filter(link -> "create-project".equals(link.getRel())).collect(Collectors.toList());
+        return Optional.of(createProjectLinks.get(0).getHref());
     }
 }

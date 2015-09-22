@@ -45,6 +45,7 @@ import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 
@@ -102,40 +103,43 @@ public class DevopsFactoriesService extends Service {
 
         List<Factory> factories = factoryConnection.findMatchingFactories(factoryName);
 
-        Factory factory = null;
-        if (factories.size() == 1) {
-            // Update existing factory
-            Factory oldFactory = factories.get(0);
-            LOG.debug("factoryConnection.updateFactory(" + oldFactory + ", " + commitId + ")");
-            factory = factoryConnection.updateFactory(oldFactory, commitId);
+        Optional<Factory> factory = Optional.empty();
+        if (factories != null) {
+            if (factories.size() == 1) {
+                // Update existing factory
+                Factory oldFactory = factories.get(0);
+                LOG.debug("factoryConnection.updateFactory(" + oldFactory + ", " + commitId + ")");
+                factory = Optional.ofNullable(factoryConnection.updateFactory(oldFactory, commitId));
 
-        } else if (factories.size() == 0) {
-            // Generate new factory
-            LOG.debug("factoryConnection.createNewFactory(" + factoryName + ", " + repositoryHtmlUrl + ", " + branch + ", " + commitId + ")");
-            factory = factoryConnection.createNewFactory(factoryName, repositoryHtmlUrl, branch, commitId);
+            } else if (factories.size() == 0) {
+                // Generate new factory
+                LOG.debug("factoryConnection.createNewFactory(" + factoryName + ", " + repositoryHtmlUrl + ", " + branch + ", " + commitId + ")");
+                factory = Optional.ofNullable(factoryConnection.createNewFactory(factoryName, repositoryHtmlUrl, branch, commitId));
 
-        } else {
-            LOG.error("findMatchingFactories(" + factoryName + ") found more than 1 factory !");
+            } else {
+                LOG.error("findMatchingFactories(" + factoryName + ") found more than 1 factory !");
+            }
         }
 
-        if (factory != null) {
-            List<Link> factoryLinks = factory.getLinks();
-            final String factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
-            if (factoryUrl != null) {
-                List<Connector> connectors = getConnectors();
-                connectors.forEach(connector -> { connector.addFactoryLink(factoryUrl); } );
-            }
+        if (factory.isPresent()) {
+            List<Link> factoryLinks = factory.get().getLinks();
+            Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
+
+            // Get connectors & provide them factory link to display
+            List<Connector> connectors = getConnectors();
+            factoryUrl.ifPresent(
+                    url -> connectors.forEach(connector -> connector.addFactoryLink(url) ));
         }
         return Response.ok().build();
     }
 
     public static List<Connector> getConnectors() {
         List<Connector> connectors = new ArrayList<>();
-        Properties connectorsProperties = getProperties(CONNECTORS_PROPERTIES_FILENAME);
-        if (connectorsProperties != null) {
-            Set<String> keySet = connectorsProperties.stringPropertyNames();
+        Optional<Properties> connectorsProperties = Optional.ofNullable(getProperties(CONNECTORS_PROPERTIES_FILENAME));
+        if (connectorsProperties.isPresent()) {
+            Set<String> keySet = connectorsProperties.get().stringPropertyNames();
             keySet.forEach(key -> {
-                String value = connectorsProperties.getProperty(key);
+                String value = connectorsProperties.get().getProperty(key);
                 String[] valueSplit = value.split(",");
                 switch (valueSplit[0]) {
                     case "jenkins" :
@@ -159,11 +163,11 @@ public class DevopsFactoriesService extends Service {
 
     public static Pair<String, String> getCredentials() {
         String[] credentials = new String[2];
-        Properties credentialsProperties = getProperties(CREDENTIALS_PROPERTIES_FILENAME);
-        if (credentialsProperties != null) {
-            Set<String> keySet = credentialsProperties.stringPropertyNames();
+        Optional<Properties> credentialsProperties = Optional.ofNullable(getProperties(CREDENTIALS_PROPERTIES_FILENAME));
+        if (credentialsProperties.isPresent()) {
+            Set<String> keySet = credentialsProperties.get().stringPropertyNames();
             keySet.forEach(key -> {
-                String value = credentialsProperties.getProperty(key);
+                String value = credentialsProperties.get().getProperty(key);
                 switch (key) {
                     case "username":
                         credentials[0] = value;
@@ -182,27 +186,27 @@ public class DevopsFactoriesService extends Service {
     public static Properties getProperties(String fileName) {
         java.nio.file.Path currentRelativePath = Paths.get("", fileName);
         String currentRelativePathString = currentRelativePath.toAbsolutePath().toString();
-        URL configPath = null;
+        Optional<URL> configPath = Optional.empty();
         try {
-            configPath = new File(currentRelativePathString).toURI().toURL();
+            configPath = Optional.ofNullable(new File(currentRelativePathString).toURI().toURL());
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-        if (configPath != null) {
-            InputStream is = null;
+        if (configPath.isPresent()) {
+            Optional<InputStream> is = Optional.empty();
             try {
-                is = configPath.openStream();
-                if (is != null) {
+                is = Optional.of(configPath.get().openStream());
+                if (is.isPresent()) {
                     Properties properties = new Properties();
-                    properties.load(is);
+                    properties.load(is.get());
                     return properties;
                 }
             } catch (IOException e) {
                 LOG.error(e.getMessage(), e);
             } finally {
                 try {
-                    if (is != null) {
-                        is.close();
+                    if (is.isPresent()) {
+                        is.get().close();
                     }
                 } catch (IOException e) {
                     LOG.error(e.getMessage(), e);
