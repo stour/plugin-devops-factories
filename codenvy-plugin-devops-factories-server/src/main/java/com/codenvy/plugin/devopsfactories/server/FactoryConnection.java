@@ -178,21 +178,18 @@ public class FactoryConnection {
 
     public Factory updateFactory(Factory oldFactory, String commidId) {
         // Get current factory data
-        final String factoryId = oldFactory.getId();
-        final String factoryV = oldFactory.getV();
-        final NewProject project = oldFactory.getProject();
-        final String sourceType = oldFactory.getSource().getProject().getType();
-        final String sourceLocation = oldFactory.getSource().getProject().getLocation();
+        final Source source = oldFactory.getSource();
+        final ImportSourceDescriptor sourceProject = source.getProject();
 
         // Build new factory object with updated commitId
-        Map<String, String> projectParams = oldFactory.getSource().getProject().getParameters();
+        Map<String, String> projectParams = sourceProject.getParameters();
         projectParams.put("commitId", commidId);
-        ImportSourceDescriptor updatedSourceProject = DtoFactory.newDto(ImportSourceDescriptor.class).withType(sourceType)
-                .withLocation(sourceLocation).withParameters(projectParams);
-        Source updatedSource = DtoFactory.newDto(Source.class).withProject(updatedSourceProject);
-        Factory updatedFactory = DtoFactory.newDto(Factory.class).withV(factoryV).withSource(updatedSource).withProject(project);
+        ImportSourceDescriptor updatedSourceProject = sourceProject.withParameters(projectParams);
+        Source updatedSource = source.withProject(updatedSourceProject);
+        Factory updatedFactory = oldFactory.withSource(updatedSource);
 
         // Update factory
+        final String factoryId = updatedFactory.getId();
         String url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "updateFactory")
                 .build(factoryId).toString();
 
