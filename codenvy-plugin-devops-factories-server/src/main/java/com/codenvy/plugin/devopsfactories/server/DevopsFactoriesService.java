@@ -136,29 +136,30 @@ public class DevopsFactoriesService extends Service {
     public static List<Connector> getConnectors(String factoryName) {
         List<Connector> connectors = new ArrayList<>();
         Optional<Properties> connectorsProperties = Optional.ofNullable(getProperties(CONNECTORS_PROPERTIES_FILENAME));
-        if (connectorsProperties.isPresent()) {
-            Set<String> keySet = connectorsProperties.get().stringPropertyNames();
-            keySet.stream().filter(key -> factoryName.equals(connectorsProperties.get().getProperty(key)
-                    .split(",")[0])).forEach(key -> {
-                String value = connectorsProperties.get().getProperty(key);
-                String[] valueSplit = value.split(",");
-                switch (valueSplit[1]) {
-                    case "jenkins":
-                        JenkinsConnector jenkinsConnector = new JenkinsConnector(valueSplit[2], valueSplit[3]);
-                        connectors.add(jenkinsConnector);
-                        LOG.debug("new JenkinsConnector(" + valueSplit[2] + ", " + valueSplit[3] + ")");
-                        break;
-                    case "github":
-                        LOG.debug("Object GitHub connector not implemented !");
-                        break;
-                    case "jira":
-                        LOG.debug("Object JIRA connector not implemented !");
-                        break;
-                    default:
-                        break;
-                }
-            });
-        }
+        connectorsProperties.ifPresent(properties -> {
+            Set<String> keySet = properties.stringPropertyNames();
+            keySet.stream()
+                    .filter(key -> factoryName.equals(properties.getProperty(key).split(",")[0]))
+                    .forEach(key -> {
+                        String value = properties.getProperty(key);
+                        String[] valueSplit = value.split(",");
+                        switch (valueSplit[1]) {
+                            case "jenkins":
+                                JenkinsConnector jenkinsConnector = new JenkinsConnector(valueSplit[2], valueSplit[3]);
+                                connectors.add(jenkinsConnector);
+                                LOG.debug("new JenkinsConnector(" + valueSplit[2] + ", " + valueSplit[3] + ")");
+                                break;
+                            case "github":
+                                LOG.debug("Object GitHub connector not implemented !");
+                                break;
+                            case "jira":
+                                LOG.debug("Object JIRA connector not implemented !");
+                                break;
+                            default:
+                                break;
+                        }
+                    });
+        });
         return connectors;
     }
 
