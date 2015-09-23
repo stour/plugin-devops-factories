@@ -121,15 +121,15 @@ public class DevopsFactoriesService extends Service {
             }
         }
 
-        if (factory.isPresent()) {
-            List<Link> factoryLinks = factory.get().getLinks();
+        factory.ifPresent(f -> {
+            List<Link> factoryLinks = f.getLinks();
             Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
 
             // Get connectors & provide them factory link to display
             List<Connector> connectors = getConnectors(factoryName);
             factoryUrl.ifPresent(
                     url -> connectors.forEach(connector -> connector.addFactoryLink(url) ));
-        }
+        } );
         return Response.ok().build();
     }
 
