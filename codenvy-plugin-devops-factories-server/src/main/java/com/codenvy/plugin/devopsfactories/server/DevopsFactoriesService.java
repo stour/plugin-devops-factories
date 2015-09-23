@@ -133,6 +133,14 @@ public class DevopsFactoriesService extends Service {
         return Response.ok().build();
     }
 
+    /**
+     * description of connectors in properties file is:
+     *      Jenkins connector: [connector-name]=[factory-name],[connector-type],[jenkins-url],[jenkins-job-name]
+     *      JIRA connector: [connector-name]=[factory-name],[connector-type],[jira-url],[issue-id]
+     *
+     * @param factoryName
+     * @return the list of all connectors contained in properties file {@link CONNECTORS_PROPERTIES_FILENAME}
+     */
     public static List<Connector> getConnectors(String factoryName) {
         List<Connector> connectors = new ArrayList<>();
         Optional<Properties> connectorsProperties = Optional.ofNullable(getProperties(CONNECTORS_PROPERTIES_FILENAME));
@@ -148,9 +156,6 @@ public class DevopsFactoriesService extends Service {
                                 JenkinsConnector jenkinsConnector = new JenkinsConnector(valueSplit[2], valueSplit[3]);
                                 connectors.add(jenkinsConnector);
                                 LOG.debug("new JenkinsConnector(" + valueSplit[2] + ", " + valueSplit[3] + ")");
-                                break;
-                            case "github":
-                                LOG.debug("Object GitHub connector not implemented !");
                                 break;
                             case "jira":
                                 LOG.debug("Object JIRA connector not implemented !");
