@@ -225,9 +225,8 @@ public class FactoryConnection {
         ImportSourceDescriptor sourceProject = DtoFactory.newDto(ImportSourceDescriptor.class).withType("git")
                 .withLocation(sourceLocation).withParameters(projectParams);
         Source source = DtoFactory.newDto(Source.class).withProject(sourceProject);
-        BuildersDescriptor builders = DtoFactory.newDto(BuildersDescriptor.class).withDefault("maven");
         NewProject project = DtoFactory.newDto(NewProject.class).withName(name).withVisibility("public")
-                .withType("Maven").withBuilders(builders);
+                .withType("blank");
         Factory postFactory = DtoFactory.newDto(Factory.class).withV("2.1").withSource(source).withProject(project);
 
         // Create factory
