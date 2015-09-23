@@ -128,8 +128,8 @@ public class DevopsFactoriesService extends Service {
             // Get connectors & provide them factory link to display
             List<Connector> connectors = getConnectors(factoryName);
             factoryUrl.ifPresent(
-                    url -> connectors.forEach(connector -> connector.addFactoryLink(url) ));
-        } );
+                    url -> connectors.forEach(connector -> connector.addFactoryLink(url)));
+        });
         return Response.ok().build();
     }
 
