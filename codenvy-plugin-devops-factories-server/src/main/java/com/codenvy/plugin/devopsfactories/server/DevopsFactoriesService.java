@@ -141,7 +141,7 @@ public class DevopsFactoriesService extends Service {
      * @param factoryName
      * @return the list of all connectors contained in properties file {@link CONNECTORS_PROPERTIES_FILENAME}
      */
-    public static List<Connector> getConnectors(String factoryName) {
+    protected static List<Connector> getConnectors(String factoryName) {
         List<Connector> connectors = new ArrayList<>();
         Optional<Properties> connectorsProperties = Optional.ofNullable(getProperties(CONNECTORS_PROPERTIES_FILENAME));
         connectorsProperties.ifPresent(properties -> {
@@ -168,7 +168,7 @@ public class DevopsFactoriesService extends Service {
         return connectors;
     }
 
-    public static Pair<String, String> getCredentials() {
+    protected static Pair<String, String> getCredentials() {
         String[] credentials = new String[2];
         Optional<Properties> credentialsProperties = Optional.ofNullable(getProperties(CREDENTIALS_PROPERTIES_FILENAME));
         if (credentialsProperties.isPresent()) {
@@ -190,7 +190,7 @@ public class DevopsFactoriesService extends Service {
         return Pair.of(credentials[0], credentials[1]);
     }
 
-    public static Properties getProperties(String fileName) {
+    protected static Properties getProperties(String fileName) {
         java.nio.file.Path currentRelativePath = Paths.get("", fileName);
         String currentRelativePathString = currentRelativePath.toAbsolutePath().toString();
         Optional<URL> configPath = Optional.empty();
