@@ -69,10 +69,10 @@ public class DevopsFactoriesService extends Service {
 
     @ApiOperation(value = "Notify a new contribution on a GitHub project",
             response = Response.class)
-    @ApiResponses({        @ApiResponse(
+    @ApiResponses({@ApiResponse(
             code = 200,
             message = "OK"
-    ),         @ApiResponse(
+    ), @ApiResponse(
             code = 500,
             message = "Internal Server Error"
     )})
