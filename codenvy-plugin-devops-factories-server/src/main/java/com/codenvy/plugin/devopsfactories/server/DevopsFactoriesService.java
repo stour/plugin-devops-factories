@@ -134,9 +134,8 @@ public class DevopsFactoriesService extends Service {
     }
 
     /**
-     * description of connectors in properties file is:
-     *      Jenkins connector: [connector-name]=[factory-name],[connector-type],[jenkins-url],[jenkins-job-name]
-     *      JIRA connector: [connector-name]=[factory-name],[connector-type],[jira-url],[issue-id]
+     * Description of connectors in properties file is:
+     * Jenkins connector: [connector-name]=[connector-type],[factory-id],[jenkins-url],[jenkins-job-name]
      *
      * @param factoryName
      * @return the list of all connectors contained in properties file {@link CONNECTORS_PROPERTIES_FILENAME}
