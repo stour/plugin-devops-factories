@@ -12,6 +12,7 @@ package com.codenvy.plugin.devopsfactories.server;
 
 import com.codenvy.plugin.devopsfactories.server.connectors.Connector;
 import com.codenvy.plugin.devopsfactories.server.connectors.JenkinsConnector;
+import com.codenvy.plugin.devopsfactories.server.webhook.GithubWebhook;
 import com.codenvy.plugin.devopsfactories.shared.PushEvent;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
@@ -26,6 +27,7 @@ import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.core.rest.annotations.Description;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.factory.dto.Factory;
+import org.eclipse.che.api.project.shared.dto.ImportSourceDescriptor;
 import org.eclipse.che.commons.lang.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,12 +61,17 @@ public class DevopsFactoriesService extends Service {
     private static final Logger LOG = LoggerFactory.getLogger(DevopsFactoriesService.class);
     private static final String CONNECTORS_PROPERTIES_FILENAME = "connectors.properties";
     private static final String CREDENTIALS_PROPERTIES_FILENAME = "credentials.properties";
+    private static final String WEBHOOKS_PROPERTIES_FILENAME = "webhooks.properties";
 
+    private final List<GithubWebhook> webhooks;
     private final FactoryConnection factoryConnection;
 
     @Inject
     public DevopsFactoriesService(final FactoryConnection factoryConnection) {
         this.factoryConnection = factoryConnection;
+
+        this.webhooks = getWebhooks();
+        webhooks.forEach(webhook -> webhook.configure());
     }
 
     @ApiOperation(value = "Notify a new contribution on a GitHub project",
@@ -89,68 +96,91 @@ public class DevopsFactoriesService extends Service {
                 + ", contribution.getRepository().getHtmlUrl(): " + contribution.getRepository().getHtmlUrl()
                 + ", contribution.getAfter(): " + contribution.getAfter());
 
-        final String[] refSplit = contribution.getRef().split("/");
-        final String branch = refSplit[refSplit.length - 1];
-        // TODO use repository.getHtmlUrl()
-        final String repositoryUrl = contribution.getRepository().getUrl();
-        final String[] repositoryUrlSplit = repositoryUrl.split("/");
-        final String repositoryName = repositoryUrlSplit[repositoryUrlSplit.length - 1];
-        String repositoryHtmlUrl = "https://github.com/"
-                + repositoryUrlSplit[repositoryUrlSplit.length - 2] + "/" + repositoryUrlSplit[repositoryUrlSplit.length - 1];
-        final String commitId = contribution.getAfter();
+        // Get contribution data
+        final String contribRepositoryUrl = contribution.getRepository().getUrl();
+        final String[] contribRefSplit = contribution.getRef().split("/");
+        final String contribBranch = contribRefSplit[contribRefSplit.length - 1];
+        final String contribCommitId = contribution.getAfter();
 
-        final String factoryName = repositoryName + "--" + branch;
+        // Search for a webhook configured for a factory that matches contribution data
+        for (GithubWebhook webhook : webhooks) {
+            final String factoryId = webhook.getFactoryId();
+            Optional<Factory> factory = Optional.ofNullable(factoryConnection.getFactory(factoryId));
+            if (factory.isPresent()) {
+                final Factory f = factory.get();
+                ImportSourceDescriptor project = f.getSource().getProject();
+                String location = project.getLocation();
+                String branch = project.getParameters().get("branch");
 
-        List<Factory> factories = factoryConnection.findMatchingFactories(factoryName);
+                // A Github webhook links a repository and branch to a factory
+                // source.project.location & source.project.parameters.branch are set in factory.json
+                // So there is maximum one GitHub webhook for one factory
+                if (location.equals(contribRepositoryUrl) && (branch.equals(contribBranch))) {
+                    LOG.debug("factoryConnection.updateFactory(" + f + ", " + contribCommitId + ")");
+                    Optional<Factory> updatedFactory = Optional.ofNullable(factoryConnection.updateFactory(f, contribCommitId));
 
-        Optional<Factory> factory = Optional.empty();
-        if (factories != null) {
-            if (factories.size() == 1) {
-                // Update existing factory
-                Factory oldFactory = factories.get(0);
-                LOG.debug("factoryConnection.updateFactory(" + oldFactory + ", " + commitId + ")");
-                factory = Optional.ofNullable(factoryConnection.updateFactory(oldFactory, commitId));
+                    updatedFactory.ifPresent(uf -> {
+                        List<Link> factoryLinks = uf.getLinks();
+                        Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
 
-            } else if (factories.size() == 0) {
-                // Generate new factory
-                LOG.debug("factoryConnection.createNewFactory(" + factoryName + ", " + repositoryHtmlUrl + ", " + branch + ", " + commitId + ")");
-                factory = Optional.ofNullable(factoryConnection.createNewFactory(factoryName, repositoryHtmlUrl, branch, commitId));
-
-            } else {
-                LOG.error("findMatchingFactories(" + factoryName + ") found more than 1 factory !");
-            }
-        }
-
-        factory.ifPresent(f -> {
-            List<Link> factoryLinks = f.getLinks();
-            Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
-
-            // Get connectors & provide them factory link to display
-            List<Connector> connectors = getConnectors(factoryName);
-            factoryUrl.ifPresent(
-                    url -> connectors.forEach(connector -> connector.addFactoryLink(url)));
-        });
+                        // Get connectors configured for the factory & display factory link within third-party services
+                        List<Connector> connectors = getConnectors(factoryId);
+                        factoryUrl.ifPresent(
+                                url -> connectors.forEach(connector -> connector.addFactoryLink(url)));
+                    });
+                    break;
+                }
+            };
+        };
         return Response.ok().build();
+    }
+
+    /**
+     * Description of webhooks in properties file is:
+     * GitHub webhook: [webhook-name]=[webhook-type],[factory-id]
+     *
+     * @return the list of all webhooks contained in properties file {@link WEBHOOKS_PROPERTIES_FILENAME}
+     */
+    protected static List<GithubWebhook> getWebhooks() {
+        List<GithubWebhook> webhooks = new ArrayList<>();
+        Optional<Properties> webhooksProperties = Optional.ofNullable(getProperties(WEBHOOKS_PROPERTIES_FILENAME));
+        webhooksProperties.ifPresent(properties -> {
+            Set<String> keySet = properties.stringPropertyNames();
+            keySet.stream().forEach(key -> {
+                String value = properties.getProperty(key);
+                String[] valueSplit = value.split(",");
+                switch (valueSplit[0]) {
+                    case "github":
+                        GithubWebhook githubWebhook = new GithubWebhook(valueSplit[1]);
+                        webhooks.add(githubWebhook);
+                        LOG.debug("new GithubWebhook(" + valueSplit[1] + ", " + valueSplit[2] + ", " + valueSplit[3] + ")");
+                        break;
+                    default:
+                        break;
+                }
+            });
+        });
+        return webhooks;
     }
 
     /**
      * Description of connectors in properties file is:
      * Jenkins connector: [connector-name]=[connector-type],[factory-id],[jenkins-url],[jenkins-job-name]
      *
-     * @param factoryName
+     * @param factoryId
      * @return the list of all connectors contained in properties file {@link CONNECTORS_PROPERTIES_FILENAME}
      */
-    protected static List<Connector> getConnectors(String factoryName) {
+    protected static List<Connector> getConnectors(String factoryId) {
         List<Connector> connectors = new ArrayList<>();
         Optional<Properties> connectorsProperties = Optional.ofNullable(getProperties(CONNECTORS_PROPERTIES_FILENAME));
         connectorsProperties.ifPresent(properties -> {
             Set<String> keySet = properties.stringPropertyNames();
             keySet.stream()
-                    .filter(key -> factoryName.equals(properties.getProperty(key).split(",")[0]))
+                    .filter(key -> factoryId.equals(properties.getProperty(key).split(",")[1]))
                     .forEach(key -> {
                         String value = properties.getProperty(key);
                         String[] valueSplit = value.split(",");
-                        switch (valueSplit[1]) {
+                        switch (valueSplit[0]) {
                             case "jenkins":
                                 JenkinsConnector jenkinsConnector = new JenkinsConnector(valueSplit[2], valueSplit[3]);
                                 connectors.add(jenkinsConnector);
