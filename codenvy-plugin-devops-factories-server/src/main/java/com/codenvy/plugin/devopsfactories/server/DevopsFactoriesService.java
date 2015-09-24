@@ -116,14 +116,14 @@ public class DevopsFactoriesService extends Service {
                 // source.project.location & source.project.parameters.branch are set in factory.json
                 // So there is maximum one GitHub webhook for one factory
                 if (location.equals(contribRepositoryUrl) && (branch.equals(contribBranch))) {
-                    LOG.debug("factoryConnection.updateFactory(" + f + ", " + contribCommitId + ")");
+                    // Update factory
                     Optional<Factory> updatedFactory = Optional.ofNullable(factoryConnection.updateFactory(f, contribCommitId));
 
                     updatedFactory.ifPresent(uf -> {
                         List<Link> factoryLinks = uf.getLinks();
                         Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
 
-                        // Get connectors configured for the factory & display factory link within third-party services
+                        // Display factory link within third-party services (using connectors configured for the factory)
                         List<Connector> connectors = getConnectors(factoryId);
                         factoryUrl.ifPresent(
                                 url -> connectors.forEach(connector -> connector.addFactoryLink(url)));
