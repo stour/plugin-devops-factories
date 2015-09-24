@@ -101,6 +101,36 @@ public class FactoryConnection {
         }
     }
 
+    public Factory getFactory(String factoryId) {
+        String url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "getFactory")
+                .build(factoryId).toString();
+        LOG.debug("getFactory: " + url);
+
+        Factory factory = null;
+        try {
+            if (userToken.isPresent()) {
+                Token token = userToken.get();
+                Pair tokenParam = Pair.of("token", token.getValue());
+                factory = HttpJsonHelper.get(Factory.class, url, tokenParam);
+            } else {
+                factory = HttpJsonHelper.get(Factory.class, url);
+            }
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (ServerException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (UnauthorizedException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (ForbiddenException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (NotFoundException e) {
+            LOG.error(e.getMessage(), e);
+        } catch (ConflictException e) {
+            LOG.error(e.getMessage(), e);
+        }
+        return factory;
+    }
+
     public List<Factory> findMatchingFactories(String factoryName) {
         List<Link> factoryLinks = null;
         Pair factoryNameParam = Pair.of("project.name", factoryName);
@@ -135,39 +165,13 @@ public class FactoryConnection {
             // Get factories by IDs
             ArrayList<Factory> factories = new ArrayList<>();
 
-            LOG.debug("findMatchingFactories() found " + factoryLinks.size() + " factories");
             for (Link link : factoryLinks) {
                 String href = link.getHref();
                 String[] hrefSplit = href.split("/");
                 String factoryId = hrefSplit[hrefSplit.length - 1];
 
-                String url1 = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "getFactory")
-                        .build(factoryId).toString();
-                LOG.debug("getFactory: " + url1);
-
-                try {
-                    Factory factory;
-                    if (userToken.isPresent()) {
-                        Token token = userToken.get();
-                        Pair tokenParam = Pair.of("token", token.getValue());
-                        factory = HttpJsonHelper.get(Factory.class, url1, tokenParam);
-                    } else {
-                        factory = HttpJsonHelper.get(Factory.class, url1);
-                    }
-                    factories.add(factory);
-                } catch (IOException e) {
-                    LOG.error(e.getMessage(), e);
-                } catch (ServerException e) {
-                    LOG.error(e.getMessage(), e);
-                } catch (UnauthorizedException e) {
-                    LOG.error(e.getMessage(), e);
-                } catch (ForbiddenException e) {
-                    LOG.error(e.getMessage(), e);
-                } catch (NotFoundException e) {
-                    LOG.error(e.getMessage(), e);
-                } catch (ConflictException e) {
-                    LOG.error(e.getMessage(), e);
-                }
+                Optional<Factory> factory = Optional.ofNullable(getFactory(factoryId));
+                factory.ifPresent(f -> factories.add(f));
             }
             LOG.debug("findMatchingFactories() returned " + factories.size() + " factories");
             return factories;
