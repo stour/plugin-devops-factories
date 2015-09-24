@@ -63,15 +63,11 @@ public class DevopsFactoriesService extends Service {
     private static final String CREDENTIALS_PROPERTIES_FILENAME = "credentials.properties";
     private static final String WEBHOOKS_PROPERTIES_FILENAME = "webhooks.properties";
 
-    private final List<GithubWebhook> webhooks;
     private final FactoryConnection factoryConnection;
 
     @Inject
     public DevopsFactoriesService(final FactoryConnection factoryConnection) {
         this.factoryConnection = factoryConnection;
-
-        this.webhooks = getWebhooks();
-        webhooks.forEach(webhook -> webhook.configure());
     }
 
     @ApiOperation(value = "Notify a new contribution on a GitHub project",
@@ -103,6 +99,7 @@ public class DevopsFactoriesService extends Service {
         final String contribCommitId = contribution.getAfter();
 
         // Search for a webhook configured for a factory that matches contribution data
+        List<GithubWebhook> webhooks = getWebhooks();
         for (GithubWebhook webhook : webhooks) {
             final String factoryId = webhook.getFactoryId();
             Optional<Factory> factory = Optional.ofNullable(factoryConnection.getFactory(factoryId));
