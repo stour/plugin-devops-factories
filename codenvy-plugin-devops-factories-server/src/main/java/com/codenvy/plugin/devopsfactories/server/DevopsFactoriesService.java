@@ -153,7 +153,7 @@ public class DevopsFactoriesService extends Service {
                     case "github":
                         GithubWebhook githubWebhook = new GithubWebhook(valueSplit[1]);
                         webhooks.add(githubWebhook);
-                        LOG.debug("new GithubWebhook(" + valueSplit[1] + ", " + valueSplit[2] + ", " + valueSplit[3] + ")");
+                        LOG.debug("new GithubWebhook(" + valueSplit[1] + ")");
                         break;
                     default:
                         break;
