@@ -37,6 +37,7 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 
@@ -57,18 +58,20 @@ public class JenkinsConnector implements Connector {
 
     @Override
     public void addFactoryLink(String factoryUrl) {
-        String jobConfigXml = getCurrentJenkinsJobConfiguration();
-        if (jobConfigXml != null) {
-            Document configDocument = xmlToDocument(jobConfigXml);
-            Element root = configDocument.getDocumentElement();
-            Node descriptionNode = root.getElementsByTagName("description").item(0);
+        Optional<String> jobConfigXml = Optional.ofNullable(getCurrentJenkinsJobConfiguration());
+        jobConfigXml.ifPresent(xml -> {
+            Optional<Document> configDocument = Optional.ofNullable(xmlToDocument(xml));
+            configDocument.ifPresent(doc -> {
+                Element root = doc.getDocumentElement();
+                Node descriptionNode = root.getElementsByTagName("description").item(0);
 
-            if (!descriptionNode.getTextContent().contains(factoryUrl)) {
-                updateJenkinsJobDescription(factoryUrl, configDocument, descriptionNode);
-            } else {
-                LOG.debug("factory link " + factoryUrl + " already displayed on description of Jenkins job " + jobName);
-            }
-        }
+                if (!descriptionNode.getTextContent().contains(factoryUrl)) {
+                    updateJenkinsJobDescription(factoryUrl, doc, descriptionNode);
+                } else {
+                    LOG.debug("factory link " + factoryUrl + " already displayed on description of Jenkins job " + jobName);
+                }
+            });
+        });
     }
 
     protected String getCurrentJenkinsJobConfiguration() {
