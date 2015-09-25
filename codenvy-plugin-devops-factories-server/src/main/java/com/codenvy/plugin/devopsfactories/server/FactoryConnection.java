@@ -93,12 +93,12 @@ public class FactoryConnection {
             LOG.error(e.getMessage(), e);
         } catch (ConflictException e) {
             LOG.error(e.getMessage(), e);
-        } finally {
-            if (userToken != null) {
-                LOG.debug("successfully authenticated with token " + userToken);
-            }
-            return userToken;
         }
+        if (userToken != null) {
+            LOG.debug("successfully authenticated with token " + userToken);
+        }
+        return userToken;
+
     }
 
     public Factory getFactory(String factoryId) {
