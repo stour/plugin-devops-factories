@@ -46,6 +46,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -98,43 +99,45 @@ public class DevopsFactoriesService extends Service {
         final String contribBranch = contribRefSplit[contribRefSplit.length - 1];
         final String contribCommitId = contribution.getAfter();
 
-        // Search for a webhook configured for a factory that matches contribution data
         List<GithubWebhook> webhooks = getWebhooks();
         for (GithubWebhook webhook : webhooks) {
-            final String factoryId = webhook.getFactoryId();
-            Optional<Factory> factory = Optional.ofNullable(factoryConnection.getFactory(factoryId));
-            if (factory.isPresent()) {
-                final Factory f = factory.get();
-                ImportSourceDescriptor project = f.getSource().getProject();
-                String location = project.getLocation();
-                String branch = project.getParameters().get("branch");
+            // Search for a webhook configured for same repository as contribution data
+            String webhookRepositoryUrl = webhook.getRepositoryUrl();
+            if (contribRepositoryUrl.equals(webhookRepositoryUrl)) {
+                final List<String> factoryIDs = Arrays.asList(webhook.getFactoryIDs());
+                for (String factoryId : factoryIDs) {
+                    Optional<Factory> factory = Optional.ofNullable(factoryConnection.getFactory(factoryId));
+                    if (factory.isPresent()) {
+                        final Factory f = factory.get();
+                        ImportSourceDescriptor project = f.getSource().getProject();
+                        Optional<String> branch = Optional.ofNullable(project.getParameters().get("branch"));
 
-                // A Github webhook links a repository and branch to a factory
-                // source.project.location & source.project.parameters.branch are set in factory.json
-                // So there is maximum one GitHub webhook for one factory
-                if (location.equals(contribRepositoryUrl) && (branch.equals(contribBranch))) {
-                    // Update factory
-                    Optional<Factory> updatedFactory = Optional.ofNullable(factoryConnection.updateFactory(f, contribCommitId));
+                        // Test if branch set for the factory corresponds to branch value in contribution event
+                        if (branch.isPresent() && branch.get().equals(contribBranch)) {
+                            // Update factory with new commitId
+                            Optional<Factory> updatedFactory = Optional.ofNullable(factoryConnection.updateFactory(f, contribCommitId));
 
-                    updatedFactory.ifPresent(uf -> {
-                        List<Link> factoryLinks = uf.getLinks();
-                        Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
+                            updatedFactory.ifPresent(uf -> {
+                                List<Link> factoryLinks = uf.getLinks();
+                                Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
 
-                        // Display factory link within third-party services (using connectors configured for the factory)
-                        List<Connector> connectors = getConnectors(factoryId);
-                        factoryUrl.ifPresent(
-                                url -> connectors.forEach(connector -> connector.addFactoryLink(url)));
-                    });
-                    break;
+                                // Display factory link within third-party services (using connectors configured for the factory)
+                                List<Connector> connectors = getConnectors(factoryId);
+                                factoryUrl.ifPresent(
+                                        url -> connectors.forEach(connector -> connector.addFactoryLink(url)));
+                            });
+                            break;
+                        }
+                    };
                 }
-            };
+            }
         };
         return Response.ok().build();
     }
 
     /**
      * Description of webhooks in properties file is:
-     * GitHub webhook: [webhook-name]=[webhook-type],[factory-id]
+     * GitHub webhook: [webhook-name]=[webhook-type],[repository-url],[factory-id];[factory-id];...;[factory-id]
      *
      * @return the list of all webhooks contained in properties file {@link WEBHOOKS_PROPERTIES_FILENAME}
      */
@@ -148,9 +151,10 @@ public class DevopsFactoriesService extends Service {
                 String[] valueSplit = value.split(",");
                 switch (valueSplit[0]) {
                     case "github":
-                        GithubWebhook githubWebhook = new GithubWebhook(valueSplit[1]);
+                        String[] factoriesIDs = valueSplit[2].split(";");
+                        GithubWebhook githubWebhook = new GithubWebhook(valueSplit[1], factoriesIDs);
                         webhooks.add(githubWebhook);
-                        LOG.debug("new GithubWebhook(" + valueSplit[1] + ")");
+                        LOG.debug("new GithubWebhook(" + valueSplit[1] + ", " + Arrays.toString(factoriesIDs) + ")");
                         break;
                     default:
                         break;

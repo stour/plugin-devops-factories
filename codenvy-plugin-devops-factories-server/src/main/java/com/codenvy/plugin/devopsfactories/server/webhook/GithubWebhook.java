@@ -11,28 +11,34 @@
 package com.codenvy.plugin.devopsfactories.server.webhook;
 
 /**
- * A Github webhook associates an existing Codenvy factoryId with a Github repository & branch.
+ * Represents a webhook on a Github repository.
+ * A factory can be linked to a webhook only if source.project.location = {@link repositoryUrl}
+ * A webhook is linked to at least one factory.
  *
  * @author stour
  */
 public class GithubWebhook {
 
-    private final String factoryId;
+    private final String repositoryUrl;
+    private final String[] factoryIDs;
 
-    public GithubWebhook(String factoryId) {
-        this.factoryId = factoryId;
+    public GithubWebhook(String repositoryUrl, String[] factoryIDs) {
+        this.repositoryUrl = repositoryUrl;
+        // TODO Check that source.project.location = repositoryUrl for each factory
+        this.factoryIDs = factoryIDs;
     }
 
-    public String getFactoryId() {
-        return factoryId;
+    public String getRepositoryUrl() {
+        return repositoryUrl;
+    }
+
+    public String[] getFactoryIDs() {
+        return factoryIDs;
     }
 
     /**
      *
-     * Configure a webhook on a Github repository based on
-     * value of source.project.location & source.project.parameters.branch
-     *
-     * --> source.project.location & source.project.parameters.branch MUST be set in factory.json
+     * Configure a webhook on a Github repository
      */
     public void configure() {
 
