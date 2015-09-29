@@ -144,19 +144,19 @@ public class DevopsFactoriesService extends Service {
             throws ConflictException, ForbiddenException, ServerException, NotFoundException {
 
         LOG.info("githubPullRequestWebhook");
-        LOG.info("prEvent.getPullRequest().getHead().getRepository().getHtmlUrl(): " + prEvent.getPullRequest().getHead().getRepository().getHtmlUrl()
-                + ", prEvent.getPullRequest().getBase().getRepository().getHtmlUrl(): " + prEvent.getPullRequest().getBase().getRepository().getHtmlUrl());
+        LOG.info("prEvent.getPullRequest().getHead().getRepository().getHtmlUrl(): " + prEvent.getPullRequest().getHead().getRepo().getHtmlUrl()
+                + ", prEvent.getPullRequest().getBase().getRepository().getHtmlUrl(): " + prEvent.getPullRequest().getBase().getRepo().getHtmlUrl());
 
         String action = prEvent.getAction();
         if ("closed".equals(action)) {
             boolean isMerged = prEvent.getPullRequest().getMerged();
             if (isMerged) {
-                final String prHeadRepositoryUrl = prEvent.getPullRequest().getHead().getRepository().getUrl();
+                final String prHeadRepositoryUrl = prEvent.getPullRequest().getHead().getRepo().getUrl();
                 final String prHeadRepositoryHtmlUrl = buildHtmlUrlFromUrl(prHeadRepositoryUrl);
                 final String prHeadBranch = prEvent.getPullRequest().getHead().getRef();
 
                 // Get base repository, branch & commitId (values after merge)
-                final String prBaseRepositoryUrl = prEvent.getPullRequest().getBase().getRepository().getUrl();
+                final String prBaseRepositoryUrl = prEvent.getPullRequest().getBase().getRepo().getUrl();
                 final String prBaseRepositoryHtmlUrl = buildHtmlUrlFromUrl(prBaseRepositoryUrl);
                 final String prBaseBranch = prEvent.getPullRequest().getBase().getRef();
                 final String prBaseCommitId = prEvent.getPullRequest().getBase().getSha();

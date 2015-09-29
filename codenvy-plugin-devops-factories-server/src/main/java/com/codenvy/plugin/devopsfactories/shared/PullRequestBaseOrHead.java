@@ -48,13 +48,13 @@ public interface PullRequestBaseOrHead {
     PullRequestBaseOrHead withSha(String sha);
 
     /**
-     * Get pull request head (or base) repository.
+     * Get pull request head (or base) repo.
      *
-     * @return {@link Repository} repository
+     * @return {@link Repository} repo
      */
-    Repository getRepository();
+    Repository getRepo();
 
-    void setRepository(Repository repository);
+    void setRepo(Repository repo);
 
-    PullRequestBaseOrHead withRepository(Repository repository);
+    PullRequestBaseOrHead withRepo(Repository repo);
 }
