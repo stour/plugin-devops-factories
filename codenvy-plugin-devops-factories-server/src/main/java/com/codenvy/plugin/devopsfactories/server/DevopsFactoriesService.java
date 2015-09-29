@@ -13,6 +13,7 @@ package com.codenvy.plugin.devopsfactories.server;
 import com.codenvy.plugin.devopsfactories.server.connectors.Connector;
 import com.codenvy.plugin.devopsfactories.server.connectors.JenkinsConnector;
 import com.codenvy.plugin.devopsfactories.server.webhook.GithubWebhook;
+import com.codenvy.plugin.devopsfactories.shared.PullRequestEvent;
 import com.codenvy.plugin.devopsfactories.shared.PushEvent;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
@@ -83,13 +84,16 @@ public class DevopsFactoriesService extends Service {
     @POST
     @Path("/github-webhook")
     @Consumes(APPLICATION_JSON)
-    public Response githubWebhook(@ApiParam(value = "ID of workspace to consider", required = true)
+    public Response githubPushWebhook(@ApiParam(value = "ID of workspace to consider", required = true)
                                   @PathParam("ws-id") String workspace,
                                   @ApiParam(value = "New contribution", required = true)
                                   @Description("descriptor of contribution") PushEvent contribution)
             throws ConflictException, ForbiddenException, ServerException, NotFoundException {
 
-        LOG.debug("contribution.getRef(): " + contribution.getRef()
+        LOG.info("githubPushWebhook");
+        LOG.info("contribution.getRef(): " + contribution.getRef()
+                + ", contribution.getRepository().getFullName(): " + contribution.getRepository().getFullName()
+                + ", contribution.getRepository().getCreatedAt(): " + contribution.getRepository().getCreatedAt()
                 + ", contribution.getRepository().getHtmlUrl(): " + contribution.getRepository().getHtmlUrl()
                 + ", contribution.getAfter(): " + contribution.getAfter());
 
@@ -99,40 +103,116 @@ public class DevopsFactoriesService extends Service {
         final String contribBranch = contribRefSplit[contribRefSplit.length - 1];
         final String contribCommitId = contribution.getAfter();
 
+        final List<String> factoryIDs = getFactoryIDsFromWebhook(contribRepositoryUrl);
+        Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, contribBranch));
+
+        factory.ifPresent(f -> {
+            // Update factory with new commitId
+            Optional<Factory> updatedFactory = Optional.ofNullable(factoryConnection.updateFactory(f, null, null, contribCommitId));
+
+            updatedFactory.ifPresent(uf -> {
+                List<Link> factoryLinks = uf.getLinks();
+                Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
+
+                // Display factory link within third-party services (using connectors configured for the factory)
+                List<Connector> connectors = getConnectors(uf.getId());
+                factoryUrl.ifPresent(
+                        url -> connectors.forEach(connector -> connector.addFactoryLink(url)));
+            });
+        });
+
+        return Response.ok().build();
+    }
+
+    @ApiOperation(value = "Notify a new PullRequest event on a GitHub project",
+            response = Response.class)
+    @ApiResponses({@ApiResponse(
+            code = 200,
+            message = "OK"
+    ), @ApiResponse(
+            code = 500,
+            message = "Internal Server Error"
+    )})
+    @POST
+    @Path("/pullrequest")
+    @Consumes(APPLICATION_JSON)
+    public Response githubPullRequestWebhook(@ApiParam(value = "ID of workspace to consider", required = true)
+                                  @PathParam("ws-id") String workspace,
+                                  @ApiParam(value = "New Pull Request event", required = true)
+                                  @Description("descriptor of Pull Request event") PullRequestEvent prEvent)
+            throws ConflictException, ForbiddenException, ServerException, NotFoundException {
+
+        LOG.info("githubPullRequestWebhook");
+        LOG.info("prEvent.getPullRequest().getHead().getRepository().getHtmlUrl(): " + prEvent.getPullRequest().getHead().getRepository().getHtmlUrl()
+                + ", prEvent.getPullRequest().getBase().getRepository().getHtmlUrl(): " + prEvent.getPullRequest().getBase().getRepository().getHtmlUrl());
+
+        String action = prEvent.getAction();
+        if ("closed".equals(action)) {
+            boolean isMerged = prEvent.getPullRequest().getMerged();
+            if (isMerged) {
+                final String prHeadRepositoryUrl = prEvent.getPullRequest().getHead().getRepository().getUrl();
+                final String prHeadRepositoryHtmlUrl = buildHtmlUrlFromUrl(prHeadRepositoryUrl);
+                final String prHeadBranch = prEvent.getPullRequest().getHead().getRef();
+
+                // Get base repository, branch & commitId (values after merge)
+                final String prBaseRepositoryUrl = prEvent.getPullRequest().getBase().getRepository().getUrl();
+                final String prBaseRepositoryHtmlUrl = buildHtmlUrlFromUrl(prBaseRepositoryUrl);
+                final String prBaseBranch = prEvent.getPullRequest().getBase().getRef();
+                final String prBaseCommitId = prEvent.getPullRequest().getBase().getSha();
+
+                final List<String> factoryIDs = getFactoryIDsFromWebhook(prHeadRepositoryHtmlUrl);
+                Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, prHeadBranch));
+
+                factory.ifPresent(f -> {
+                    // Update factory with origin branch name + commitId
+                    Optional<Factory> updatedFactory =
+                            Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prBaseBranch, prBaseCommitId));
+                    updatedFactory.ifPresent(uf -> {
+                        LOG.info("Factory successfully updated with branch " + prBaseBranch + " and commitId " + prBaseCommitId);
+                    });
+                });
+            } else {
+                LOG.info("Pull Request was closed with unmerged commits !");
+            }
+        } else {
+            LOG.info("PullRequest Event action is " + action + ". We do not handle that.");
+        }
+        return Response.ok().build();
+    }
+
+    private String buildHtmlUrlFromUrl(String url) {
+        String[] urlSplit = url.split("/");
+        return "https://github.com/"
+                        + urlSplit[urlSplit.length-2] + "/" + urlSplit[urlSplit.length-1];
+    }
+
+    private Factory getFactoryForBranch(List<String> factoryIDs, String branch) {
+        for (String factoryId : factoryIDs) {
+            Optional<Factory> obtainedFactory = Optional.ofNullable(factoryConnection.getFactory(factoryId));
+            if (obtainedFactory.isPresent()) {
+                final Factory f = obtainedFactory.get();
+                ImportSourceDescriptor project = f.getSource().getProject();
+                Optional<String> factoryBranch = Optional.ofNullable(project.getParameters().get("branch"));
+
+                // Test if branch set for the factory corresponds to branch value in contribution event
+                if (factoryBranch.isPresent() && factoryBranch.get().equals(branch)) {
+                    return f;
+                }
+            }
+        }
+        return null;
+    }
+
+    private List<String> getFactoryIDsFromWebhook(String repositoryUrl) {
         List<GithubWebhook> webhooks = getWebhooks();
         for (GithubWebhook webhook : webhooks) {
             // Search for a webhook configured for same repository as contribution data
             String webhookRepositoryUrl = webhook.getRepositoryUrl();
-            if (contribRepositoryUrl.equals(webhookRepositoryUrl)) {
-                final List<String> factoryIDs = Arrays.asList(webhook.getFactoryIDs());
-                for (String factoryId : factoryIDs) {
-                    Optional<Factory> factory = Optional.ofNullable(factoryConnection.getFactory(factoryId));
-                    if (factory.isPresent()) {
-                        final Factory f = factory.get();
-                        ImportSourceDescriptor project = f.getSource().getProject();
-                        Optional<String> branch = Optional.ofNullable(project.getParameters().get("branch"));
-
-                        // Test if branch set for the factory corresponds to branch value in contribution event
-                        if (branch.isPresent() && branch.get().equals(contribBranch)) {
-                            // Update factory with new commitId
-                            Optional<Factory> updatedFactory = Optional.ofNullable(factoryConnection.updateFactory(f, contribCommitId));
-
-                            updatedFactory.ifPresent(uf -> {
-                                List<Link> factoryLinks = uf.getLinks();
-                                Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
-
-                                // Display factory link within third-party services (using connectors configured for the factory)
-                                List<Connector> connectors = getConnectors(factoryId);
-                                factoryUrl.ifPresent(
-                                        url -> connectors.forEach(connector -> connector.addFactoryLink(url)));
-                            });
-                            break;
-                        }
-                    };
-                }
+            if (repositoryUrl.equals(webhookRepositoryUrl)) {
+                return Arrays.asList(webhook.getFactoryIDs());
             }
-        };
-        return Response.ok().build();
+        }
+        return null;
     }
 
     /**
