@@ -155,21 +155,20 @@ public class DevopsFactoriesService extends Service {
                 final String prHeadRepositoryHtmlUrl = buildHtmlUrlFromUrl(prHeadRepositoryUrl);
                 final String prHeadBranch = prEvent.getPullRequest().getHead().getRef();
 
-                // Get base repository, branch & commitId (values after merge)
+                // Get base repository & branch (values after merge)
                 final String prBaseRepositoryUrl = prEvent.getPullRequest().getBase().getRepo().getUrl();
                 final String prBaseRepositoryHtmlUrl = buildHtmlUrlFromUrl(prBaseRepositoryUrl);
                 final String prBaseBranch = prEvent.getPullRequest().getBase().getRef();
-                final String prBaseCommitId = prEvent.getPullRequest().getBase().getSha();
 
                 final List<String> factoryIDs = getFactoryIDsFromWebhook(prHeadRepositoryHtmlUrl);
                 Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, prHeadBranch));
 
                 factory.ifPresent(f -> {
-                    // Update factory with origin branch name + commitId
+                    // Update factory with origin repository & branch name
                     Optional<Factory> updatedFactory =
-                            Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prBaseBranch, prBaseCommitId));
+                            Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prBaseBranch, null));
                     updatedFactory.ifPresent(uf -> {
-                        LOG.info("Factory successfully updated with branch " + prBaseBranch + " and commitId " + prBaseCommitId);
+                        LOG.info("Factory successfully updated with branch " + prBaseBranch + " (at commit: " + prEvent.getPullRequest().getHead().getSha() + ")");
                     });
                 });
             } else {
