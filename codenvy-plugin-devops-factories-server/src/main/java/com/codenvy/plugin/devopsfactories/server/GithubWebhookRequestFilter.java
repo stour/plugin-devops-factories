@@ -15,6 +15,7 @@ import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.PreMatching;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.net.URI;
 
@@ -22,6 +23,7 @@ import java.net.URI;
  * @author stour
  */
 
+@Provider
 @PreMatching
 public class GithubWebhookRequestFilter implements ContainerRequestFilter {
 
