@@ -211,4 +211,9 @@ public interface Repository {
     boolean isHasIssues();
 
     void setHasIssues(boolean isHasIssues);
+
+
+    String getFullName();
+
+    void setFullName(String fullName);
 }
