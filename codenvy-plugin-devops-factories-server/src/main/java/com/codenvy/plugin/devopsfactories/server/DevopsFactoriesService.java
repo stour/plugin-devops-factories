@@ -48,6 +48,7 @@ import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -212,7 +213,7 @@ public class DevopsFactoriesService extends Service {
                 return Arrays.asList(webhook.getFactoryIDs());
             }
         }
-        return null;
+        return Collections.emptyList();
     }
 
     /**
