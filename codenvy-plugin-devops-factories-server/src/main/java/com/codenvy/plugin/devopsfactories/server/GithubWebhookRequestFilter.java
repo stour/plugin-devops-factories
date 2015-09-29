@@ -10,13 +10,10 @@
  *******************************************************************************/
 package com.codenvy.plugin.devopsfactories.server;
 
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.container.PreMatching;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import org.everrest.core.GenericContainerRequest;
+import org.everrest.core.RequestFilter;
+
 import javax.ws.rs.ext.Provider;
-import java.io.IOException;
 import java.net.URI;
 
 /**
@@ -24,27 +21,25 @@ import java.net.URI;
  */
 
 @Provider
-@PreMatching
-public class GithubWebhookRequestFilter implements ContainerRequestFilter {
+public class GithubWebhookRequestFilter implements RequestFilter {
 
+    /**
+     * Can modify original request.
+     *
+     * @param request the request
+     */
     @Override
-    public void filter(ContainerRequestContext requestContext) throws IOException {
-        String eventType = requestContext.getHeaderString("X-GitHub-Event");
-        UriInfo ui = requestContext.getUriInfo();
-        String path = ui.getPath(false);
+    public void doFilter(GenericContainerRequest request) {
+        String eventType = request.getRequestHeader("X-GitHub-Event").get(0);
+        URI uri = request.getRequestUri();
+        String path = uri.getPath();
         if ("push".equals(eventType)) {
             // do nothing - githubPushWebhook will be called
         } else if ("pull_request".equals(eventType)) {
             // call githubPullRequestWebhook
             String sanitizedPath = (path.charAt(path.length()-1) == '/' ? path.substring(0, path.length()-2) : path);
             String newPath = sanitizedPath.substring(0, sanitizedPath.lastIndexOf('/')) + "pullrequest";
-            requestContext.setRequestUri(URI.create(newPath));
-        } else {
-            // abort with status 501
-            requestContext.abortWith(Response
-                    .status(Response.Status.NOT_IMPLEMENTED)
-                    .entity("Github " + eventType  + " event aren't yet implemented.")
-                    .build());
+            request.setUris(URI.create(newPath), request.getBaseUri());
         }
     }
 }
