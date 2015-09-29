@@ -180,16 +180,20 @@ public class FactoryConnection {
         return null;
     }
 
-    public Factory updateFactory(Factory oldFactory, String commitId) {
-        LOG.debug("factoryConnection.updateFactory(" + oldFactory + ", " + commitId + ")");
+    public Factory updateFactory(Factory oldFactory, String repository, String branch, String commitId) {
         // Get current factory data
         final Source source = oldFactory.getSource();
         final ImportSourceDescriptor sourceProject = source.getProject();
 
-        // Build new factory object with updated commitId
+        // Build new factory object with updated values
+        String location = sourceProject.getLocation();
+        if (repository != null) location = repository;
+
         Map<String, String> projectParams = sourceProject.getParameters();
-        projectParams.put("commitId", commitId);
-        ImportSourceDescriptor updatedSourceProject = sourceProject.withParameters(projectParams);
+        if (branch != null) projectParams.put("branch", branch);
+        if (commitId != null) projectParams.put("commitId", commitId);
+
+        ImportSourceDescriptor updatedSourceProject = sourceProject.withLocation(location).withParameters(projectParams);
         Source updatedSource = source.withProject(updatedSourceProject);
         Factory updatedFactory = oldFactory.withSource(updatedSource);
 
