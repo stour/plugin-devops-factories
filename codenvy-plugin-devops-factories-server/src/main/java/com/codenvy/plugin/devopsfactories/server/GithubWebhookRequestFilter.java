@@ -21,6 +21,7 @@ import java.util.List;
 /**
  * @author stour
  */
+@Path("devops/{ws-id : [a-z_0-9]+}/github-webhook")
 @Filter
 public class GithubWebhookRequestFilter implements RequestFilter {
 
