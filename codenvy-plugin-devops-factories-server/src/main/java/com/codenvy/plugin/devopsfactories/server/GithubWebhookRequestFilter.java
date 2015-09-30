@@ -10,19 +10,19 @@
  *******************************************************************************/
 package com.codenvy.plugin.devopsfactories.server;
 
+import org.everrest.core.Filter;
 import org.everrest.core.GenericContainerRequest;
 import org.everrest.core.RequestFilter;
 
-import javax.inject.Singleton;
-import javax.ws.rs.ext.Provider;
+import javax.ws.rs.Path;
 import java.net.URI;
+import java.util.List;
 
 /**
  * @author stour
  */
-
-@Provider
-@Singleton
+@Path("devops/*")
+@Filter
 public class GithubWebhookRequestFilter implements RequestFilter {
 
     /**
@@ -32,16 +32,19 @@ public class GithubWebhookRequestFilter implements RequestFilter {
      */
     @Override
     public void doFilter(GenericContainerRequest request) {
-        String eventType = request.getRequestHeader("X-GitHub-Event").get(0);
-        URI uri = request.getRequestUri();
-        String path = uri.getPath();
-        if ("push".equals(eventType)) {
-            // do nothing - githubPushWebhook will be called
-        } else if ("pull_request".equals(eventType)) {
-            // call githubPullRequestWebhook
-            String sanitizedPath = (path.charAt(path.length()-1) == '/' ? path.substring(0, path.length()-2) : path);
-            String newPath = sanitizedPath.substring(0, sanitizedPath.lastIndexOf('/')) + "pullrequest";
-            request.setUris(URI.create(newPath), request.getBaseUri());
+        List<String> githubEventHeader = request.getRequestHeader("X-GitHub-Event");
+        if (githubEventHeader.size() > 0) {
+            String eventType = githubEventHeader.get(0);
+            if ("push".equals(eventType)) {
+                // do nothing - githubPushWebhook will be called
+            } else if ("pull_request".equals(eventType)) {
+                // call githubPullRequestWebhook
+                URI uri = request.getRequestUri();
+                String path = uri.getPath();
+                String sanitizedPath = (path.charAt(path.length()-1) == '/' ? path.substring(0, path.length()-2) : path);
+                String newPath = sanitizedPath.substring(0, sanitizedPath.lastIndexOf('/')) + "pullrequest";
+                request.setUris(URI.create(newPath), request.getBaseUri());
+            }
         }
     }
 }
