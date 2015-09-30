@@ -33,7 +33,7 @@ public class GithubWebhookRequestFilter implements RequestFilter {
     @Override
     public void doFilter(GenericContainerRequest request) {
         List<String> githubEventHeader = request.getRequestHeader("X-GitHub-Event");
-        if (githubEventHeader.size() > 0) {
+        if (githubEventHeader != null && githubEventHeader.size() > 0) {
             String eventType = githubEventHeader.get(0);
             if ("push".equals(eventType)) {
                 // do nothing - githubPushWebhook will be called
