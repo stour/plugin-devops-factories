@@ -13,6 +13,7 @@ package com.codenvy.plugin.devopsfactories.server;
 import org.everrest.core.GenericContainerRequest;
 import org.everrest.core.RequestFilter;
 
+import javax.inject.Singleton;
 import javax.ws.rs.ext.Provider;
 import java.net.URI;
 
@@ -21,6 +22,7 @@ import java.net.URI;
  */
 
 @Provider
+@Singleton
 public class GithubWebhookRequestFilter implements RequestFilter {
 
     /**
