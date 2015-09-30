@@ -21,7 +21,6 @@ import java.util.List;
 /**
  * @author stour
  */
-@Path("devops/*")
 @Filter
 public class GithubWebhookRequestFilter implements RequestFilter {
 
@@ -38,12 +37,14 @@ public class GithubWebhookRequestFilter implements RequestFilter {
             if ("push".equals(eventType)) {
                 // do nothing - githubPushWebhook will be called
             } else if ("pull_request".equals(eventType)) {
-                // call githubPullRequestWebhook
                 URI uri = request.getRequestUri();
                 String path = uri.getPath();
-                String sanitizedPath = (path.charAt(path.length()-1) == '/' ? path.substring(0, path.length()-2) : path);
-                String newPath = sanitizedPath.substring(0, sanitizedPath.lastIndexOf('/')) + "pullrequest";
-                request.setUris(URI.create(newPath), request.getBaseUri());
+                if (!path.endsWith("pullrequest")) {
+                    // call githubPullRequestWebhook
+                    String sanitizedPath = (path.charAt(path.length() - 1) == '/' ? path.substring(0, path.length() - 2) : path);
+                    String newPath = sanitizedPath.substring(0, sanitizedPath.lastIndexOf('/') + 1) + "pullrequest";
+                    request.setUris(URI.create(newPath), request.getBaseUri());
+                }
             }
         }
     }
