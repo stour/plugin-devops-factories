@@ -42,11 +42,11 @@ public interface PullRequest {
      *
      * @return {@link String} html_url
      */
-    String getHtmlUrl();
+    String getHtml_url();
 
-    void setHtmlUrl(String htmlUrl);
+    void setHtml_url(String html_url);
 
-    PullRequest withHtmlUrl(String htmlUrl);
+    PullRequest withHtml_url(String html_url);
 
     /**
      * Get pull request number.
@@ -108,20 +108,9 @@ public interface PullRequest {
      *
      * @return the user
      */
-    User getMergedBy();
+    User getMerged_by();
 
-    void setMergedBy(User user);
+    void setMerged_by(User user);
 
-    PullRequest withMergedBy(User user);
-
-    /**
-     * Tells if the pull request is mergeable.
-     *
-     * @return true iff the merge can be done automatically
-     */
-    boolean getMergeable();
-
-    void setMergeable(boolean mergeable);
-
-    PullRequest withMergeable(boolean mergeable);
+    PullRequest withMerged_by(User user);
 }

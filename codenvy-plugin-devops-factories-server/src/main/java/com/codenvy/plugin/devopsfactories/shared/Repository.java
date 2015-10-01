@@ -82,9 +82,9 @@ public interface Repository {
      *
      * @return {@link Boolean} private state of the repository
      */
-    boolean isPrivateRepo();
+    boolean isPrivate_repo();
 
-    void setPrivateRepo(boolean isPrivateRepo);
+    void setPrivate_repo(boolean isPrivate_repo);
 
     /**
      * Get repository's size.
@@ -109,111 +109,111 @@ public interface Repository {
      *
      * @return {@link String} SSH URL
      */
-    String getSshUrl();
+    String getSsh_url();
 
-    void setSshUrl(String sshUrl);
+    void setSsh_url(String ssh_url);
 
     /**
      * Get HTML URL.
      *
      * @return {@link String} HTML URL
      */
-    String getHtmlUrl();
+    String getHtml_url();
 
-    void setHtmlUrl(String htmlUrl);
+    void setHtml_url(String html_url);
 
     /**
      * Get updated date.
      *
      * @return {@link String}
      */
-    String getUpdatedAt();
+    String getUpdated_at();
 
-    void setUpdatedAt(String updatedAt);
+    void setUpdated_at(String updated_at);
 
     /**
      * Get Git URL.
      *
      * @return {@link String} Git URL
      */
-    String getGitUrl();
+    String getGit_url();
 
-    void setGitUrl(String gitUrl);
+    void setGit_url(String git_url);
 
     /**
      * Get whether repository has wiki.
      *
      * @return {@link Boolean} <code> true</code> - has wiki
      */
-    boolean isHasWiki();
+    boolean isHas_wiki();
 
-    void setHasWiki(boolean isHasWiki);
+    void setHas_wiki(boolean isHas_wiki);
 
     /**
      * Get clone URL.
      *
      * @return {@link String} clone URL
      */
-    String getCloneUrl();
+    String getClone_url();
 
-    void setCloneUrl(String cloneUrl);
+    void setClone_url(String clone_url);
 
     /**
      * Get SVN URL.
      *
      * @return {@link String} SVN URL
      */
-    String getSvnUrl();
+    String getSvn_url();
 
-    void setSvnUrl(String svnUrl);
+    void setSvn_url(String svn_url);
 
     /**
      * Get the number of opened issues.
      *
      * @return {@link Integer} number of opened issues
      */
-    int getOpenedIssues();
+    int getOpened_issues();
 
-    void setOpenedIssues(int openedIssues);
+    void setOpened_issues(int opened_issues);
 
     /**
      * Get repository's created date.
      *
      * @return {@link String} created date
      */
-    String getCreatedAt();
+    String getCreated_at();
 
-    void setCreatedAt(String createdAt);
+    void setCreated_at(String created_at);
 
     /**
      * Get repository's pushed date.
      *
      * @return {@link String} pushed date
      */
-    String getPushedAt();
+    String getPushed_at();
 
-    void setPushedAt(String pushedAt);
+    void setPushed_at(String pushed_at);
 
     /**
      * Get whether repository has downloads.
      *
      * @return {@link Boolean} <code> true</code> - has downloads
      */
-    boolean isHasDownloads();
+    boolean isHas_downloads();
 
-    void setHasDownloads(boolean isHasDownloads);
+    void setHas_downloads(boolean isHas_downloads);
 
     /**
      * Get whether repository has issues.
      *
      * @return {@link Boolean} <code> true</code> - has issues
      */
-    boolean isHasIssues();
+    boolean isHas_issues();
 
-    void setHasIssues(boolean isHasIssues);
+    void setHas_issues(boolean isHas_issues);
 
 
-    String getFullName();
+    String getFull_name();
 
-    void setFullName(String fullName);
+    void setFull_name(String full_name);
 }

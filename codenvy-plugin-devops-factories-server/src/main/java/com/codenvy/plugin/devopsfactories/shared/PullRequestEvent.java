@@ -33,9 +33,9 @@ public interface PullRequestEvent {
     PullRequestEvent withNumber(int number);
 
 
-    PullRequest getPullRequest();
+    PullRequest getPull_request();
 
-    void setPullRequest(PullRequest pullRequest);
+    void setPull_request(PullRequest pull_request);
 
-    PullRequestEvent withPullRequest(PullRequest pullRequest);
+    PullRequestEvent withPull_request(PullRequest pull_request);
 }

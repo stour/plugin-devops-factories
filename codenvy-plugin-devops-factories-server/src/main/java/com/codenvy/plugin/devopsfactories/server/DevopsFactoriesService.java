@@ -124,9 +124,9 @@ public class DevopsFactoriesService extends Service {
     protected void handlePushEvent(PushEvent contribution) {
         LOG.info("handlePushEvent");
         LOG.info("contribution.getRef(): " + contribution.getRef()
-                + ", contribution.getRepository().getFullName(): " + contribution.getRepository().getFullName()
-                + ", contribution.getRepository().getCreatedAt(): " + contribution.getRepository().getCreatedAt()
-                + ", contribution.getRepository().getHtmlUrl(): " + contribution.getRepository().getHtmlUrl()
+                + ", contribution.getRepository().getFullName(): " + contribution.getRepository().getFull_name()
+                + ", contribution.getRepository().getCreatedAt(): " + contribution.getRepository().getCreated_at()
+                + ", contribution.getRepository().getHtml_url(): " + contribution.getRepository().getHtml_url()
                 + ", contribution.getAfter(): " + contribution.getAfter());
 
         // Get contribution data
@@ -157,21 +157,21 @@ public class DevopsFactoriesService extends Service {
     public Response handlePullRequestEvent(PullRequestEvent prEvent) {
 
         LOG.info("handlePullRequestEvent");
-        LOG.info("prEvent.getPullRequest().getHead().getRepository().getHtmlUrl(): " + prEvent.getPullRequest().getHead().getRepo().getHtmlUrl()
-                + ", prEvent.getPullRequest().getBase().getRepository().getHtmlUrl(): " + prEvent.getPullRequest().getBase().getRepo().getHtmlUrl());
+        LOG.info("PullRequest.Head.Repository.HtmlUrl: " + prEvent.getPull_request().getHead().getRepo().getHtml_url()
+                + ", PullRequest.Base.Repository.HtmlUrl: " + prEvent.getPull_request().getBase().getRepo().getHtml_url());
 
         String action = prEvent.getAction();
         if ("closed".equals(action)) {
-            boolean isMerged = prEvent.getPullRequest().getMerged();
+            boolean isMerged = prEvent.getPull_request().getMerged();
             if (isMerged) {
-                final String prHeadRepositoryUrl = prEvent.getPullRequest().getHead().getRepo().getUrl();
+                final String prHeadRepositoryUrl = prEvent.getPull_request().getHead().getRepo().getUrl();
                 final String prHeadRepositoryHtmlUrl = buildHtmlUrlFromUrl(prHeadRepositoryUrl);
-                final String prHeadBranch = prEvent.getPullRequest().getHead().getRef();
+                final String prHeadBranch = prEvent.getPull_request().getHead().getRef();
 
                 // Get base repository & branch (values after merge)
-                final String prBaseRepositoryUrl = prEvent.getPullRequest().getBase().getRepo().getUrl();
+                final String prBaseRepositoryUrl = prEvent.getPull_request().getBase().getRepo().getUrl();
                 final String prBaseRepositoryHtmlUrl = buildHtmlUrlFromUrl(prBaseRepositoryUrl);
-                final String prBaseBranch = prEvent.getPullRequest().getBase().getRef();
+                final String prBaseBranch = prEvent.getPull_request().getBase().getRef();
 
                 final List<String> factoryIDs = getFactoryIDsFromWebhook(prHeadRepositoryHtmlUrl);
                 Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, prHeadBranch));
@@ -181,7 +181,7 @@ public class DevopsFactoriesService extends Service {
                     Optional<Factory> updatedFactory =
                             Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prBaseBranch, null));
                     updatedFactory.ifPresent(uf -> {
-                        LOG.info("Factory successfully updated with branch " + prBaseBranch + " (at commit: " + prEvent.getPullRequest().getHead().getSha() + ")");
+                        LOG.info("Factory successfully updated with branch " + prBaseBranch + " (at commit: " + prEvent.getPull_request().getHead().getSha() + ")");
                     });
                 });
             } else {
