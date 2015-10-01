@@ -25,20 +25,23 @@ import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.rest.Service;
-import org.eclipse.che.api.core.rest.annotations.Description;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.factory.dto.Factory;
 import org.eclipse.che.api.project.shared.dto.ImportSourceDescriptor;
 import org.eclipse.che.commons.lang.Pair;
+import org.eclipse.che.dto.server.DtoFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
@@ -85,13 +88,41 @@ public class DevopsFactoriesService extends Service {
     @POST
     @Path("/github-webhook")
     @Consumes(APPLICATION_JSON)
-    public Response githubPushWebhook(@ApiParam(value = "ID of workspace to consider", required = true)
-                                  @PathParam("ws-id") String workspace,
-                                  @ApiParam(value = "New contribution", required = true)
-                                  @Description("descriptor of contribution") PushEvent contribution)
+    public Response githubWebhook(@ApiParam(value = "ID of workspace to consider", required = true)
+                                      @PathParam("ws-id") String workspace,
+                                      @ApiParam(value = "New contribution", required = true)
+                                      @Context HttpServletRequest request)
             throws ConflictException, ForbiddenException, ServerException, NotFoundException {
 
-        LOG.info("githubPushWebhook");
+        LOG.info("githubWebhook");
+        String githubHeader = request.getHeader("X-GitHub-Event");
+        switch (githubHeader) {
+            case "push":
+                try {
+                    ServletInputStream is = request.getInputStream();
+                    PushEvent event = DtoFactory.getInstance().createDtoFromJson(is, PushEvent.class);
+                    handlePushEvent(event);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case "pull_request":
+                try {
+                    ServletInputStream is = request.getInputStream();
+                    PullRequestEvent event = DtoFactory.getInstance().createDtoFromJson(is, PullRequestEvent.class);
+                    handlePullRequestEvent(event);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+            default:
+                break;
+        }
+        return Response.ok().build();
+    }
+
+    protected void handlePushEvent(PushEvent contribution) {
+        LOG.info("handlePushEvent");
         LOG.info("contribution.getRef(): " + contribution.getRef()
                 + ", contribution.getRepository().getFullName(): " + contribution.getRepository().getFullName()
                 + ", contribution.getRepository().getCreatedAt(): " + contribution.getRepository().getCreatedAt()
@@ -121,29 +152,11 @@ public class DevopsFactoriesService extends Service {
                         url -> connectors.forEach(connector -> connector.addFactoryLink(url)));
             });
         });
-
-        return Response.ok().build();
     }
 
-    @ApiOperation(value = "Notify a new PullRequest event on a GitHub project",
-            response = Response.class)
-    @ApiResponses({@ApiResponse(
-            code = 200,
-            message = "OK"
-    ), @ApiResponse(
-            code = 500,
-            message = "Internal Server Error"
-    )})
-    @POST
-    @Path("/pullrequest")
-    @Consumes(APPLICATION_JSON)
-    public Response githubPullRequestWebhook(@ApiParam(value = "ID of workspace to consider", required = true)
-                                  @PathParam("ws-id") String workspace,
-                                  @ApiParam(value = "New Pull Request event", required = true)
-                                  @Description("descriptor of Pull Request event") PullRequestEvent prEvent)
-            throws ConflictException, ForbiddenException, ServerException, NotFoundException {
+    public Response handlePullRequestEvent(PullRequestEvent prEvent) {
 
-        LOG.info("githubPullRequestWebhook");
+        LOG.info("handlePullRequestEvent");
         LOG.info("prEvent.getPullRequest().getHead().getRepository().getHtmlUrl(): " + prEvent.getPullRequest().getHead().getRepo().getHtmlUrl()
                 + ", prEvent.getPullRequest().getBase().getRepository().getHtmlUrl(): " + prEvent.getPullRequest().getBase().getRepo().getHtmlUrl());
 
