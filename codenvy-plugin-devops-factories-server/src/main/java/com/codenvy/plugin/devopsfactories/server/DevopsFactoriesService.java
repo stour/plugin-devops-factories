@@ -191,7 +191,7 @@ public class DevopsFactoriesService extends Service {
         return Response.ok().build();
     }
 
-    private Factory getFactoryForBranch(List<String> factoryIDs, String branch) {
+    protected Factory getFactoryForBranch(List<String> factoryIDs, String branch) {
         for (String factoryId : factoryIDs) {
             Optional<Factory> obtainedFactory = Optional.ofNullable(factoryConnection.getFactory(factoryId));
             if (obtainedFactory.isPresent()) {
@@ -208,7 +208,7 @@ public class DevopsFactoriesService extends Service {
         return null;
     }
 
-    private List<String> getFactoryIDsFromWebhook(String repositoryUrl) {
+    protected List<String> getFactoryIDsFromWebhook(String repositoryUrl) {
         List<GithubWebhook> webhooks = getWebhooks();
         for (GithubWebhook webhook : webhooks) {
             // Search for a webhook configured for same repository as contribution data
