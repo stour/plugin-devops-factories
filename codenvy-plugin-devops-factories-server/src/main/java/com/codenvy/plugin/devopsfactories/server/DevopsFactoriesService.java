@@ -130,12 +130,12 @@ public class DevopsFactoriesService extends Service {
                 + ", contribution.getAfter(): " + contribution.getAfter());
 
         // Get contribution data
-        final String contribRepositoryUrl = contribution.getRepository().getUrl();
+        final String contribRepositoryHtmlUrl = contribution.getRepository().getHtml_url();
         final String[] contribRefSplit = contribution.getRef().split("/");
         final String contribBranch = contribRefSplit[contribRefSplit.length - 1];
         final String contribCommitId = contribution.getAfter();
 
-        final List<String> factoryIDs = getFactoryIDsFromWebhook(contribRepositoryUrl);
+        final List<String> factoryIDs = getFactoryIDsFromWebhook(contribRepositoryHtmlUrl);
         Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, contribBranch));
 
         factory.ifPresent(f -> {
@@ -157,20 +157,18 @@ public class DevopsFactoriesService extends Service {
     public Response handlePullRequestEvent(PullRequestEvent prEvent) {
 
         LOG.info("handlePullRequestEvent");
-        LOG.info("PullRequest.Head.Repository.HtmlUrl: " + prEvent.getPull_request().getHead().getRepo().getHtml_url()
-                + ", PullRequest.Base.Repository.HtmlUrl: " + prEvent.getPull_request().getBase().getRepo().getHtml_url());
+        LOG.info("PullRequest.head.repository: " + prEvent.getPull_request().getHead().getRepo().getHtml_url());
+        LOG.info("PullRequest.base.repository: " + prEvent.getPull_request().getBase().getRepo().getHtml_url());
 
         String action = prEvent.getAction();
         if ("closed".equals(action)) {
             boolean isMerged = prEvent.getPull_request().getMerged();
             if (isMerged) {
-                final String prHeadRepositoryUrl = prEvent.getPull_request().getHead().getRepo().getUrl();
-                final String prHeadRepositoryHtmlUrl = buildHtmlUrlFromUrl(prHeadRepositoryUrl);
+                final String prHeadRepositoryHtmlUrl = prEvent.getPull_request().getHead().getRepo().getHtml_url();
                 final String prHeadBranch = prEvent.getPull_request().getHead().getRef();
 
                 // Get base repository & branch (values after merge)
-                final String prBaseRepositoryUrl = prEvent.getPull_request().getBase().getRepo().getUrl();
-                final String prBaseRepositoryHtmlUrl = buildHtmlUrlFromUrl(prBaseRepositoryUrl);
+                final String prBaseRepositoryHtmlUrl = prEvent.getPull_request().getBase().getRepo().getHtml_url();
                 final String prBaseBranch = prEvent.getPull_request().getBase().getRef();
 
                 final List<String> factoryIDs = getFactoryIDsFromWebhook(prHeadRepositoryHtmlUrl);
@@ -191,12 +189,6 @@ public class DevopsFactoriesService extends Service {
             LOG.info("PullRequest Event action is " + action + ". We do not handle that.");
         }
         return Response.ok().build();
-    }
-
-    private String buildHtmlUrlFromUrl(String url) {
-        String[] urlSplit = url.split("/");
-        return "https://github.com/"
-                        + urlSplit[urlSplit.length-2] + "/" + urlSplit[urlSplit.length-1];
     }
 
     private Factory getFactoryForBranch(List<String> factoryIDs, String branch) {
