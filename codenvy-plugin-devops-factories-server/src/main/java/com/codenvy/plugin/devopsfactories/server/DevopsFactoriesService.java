@@ -166,6 +166,7 @@ public class DevopsFactoriesService extends Service {
             if (isMerged) {
                 final String prHeadRepositoryHtmlUrl = prEvent.getPull_request().getHead().getRepo().getHtml_url();
                 final String prHeadBranch = prEvent.getPull_request().getHead().getRef();
+                final String prHeadCommitId = prEvent.getPull_request().getHead().getSha();
 
                 // Get base repository & branch (values after merge)
                 final String prBaseRepositoryHtmlUrl = prEvent.getPull_request().getBase().getRepo().getHtml_url();
@@ -177,7 +178,7 @@ public class DevopsFactoriesService extends Service {
                 factory.ifPresent(f -> {
                     // Update factory with origin repository & branch name
                     Optional<Factory> updatedFactory =
-                            Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prBaseBranch, null));
+                            Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prBaseBranch, prHeadCommitId));
                     updatedFactory.ifPresent(uf -> {
                         LOG.info("Factory successfully updated with branch " + prBaseBranch + " (at commit: " + prEvent.getPull_request().getHead().getSha() + ")");
                     });
