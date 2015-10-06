@@ -63,14 +63,10 @@ public class FactoryConnection {
     private static final Logger LOG = LoggerFactory.getLogger(FactoryConnection.class);
 
     private final String baseUrl;
-    private Optional<Token> userToken;
 
     @Inject
     public FactoryConnection(@Named("api.endpoint") String baseUrl) {
         this.baseUrl = baseUrl;
-
-        Pair<String, String> credentials = DevopsFactoriesService.getCredentials();
-        userToken = Optional.ofNullable(authenticateUser(credentials.first, credentials.second));
     }
 
     protected Token authenticateUser(String username, String password) {
@@ -102,6 +98,9 @@ public class FactoryConnection {
     }
 
     public Factory getFactory(String factoryId) {
+        Pair<String, String> credentials = DevopsFactoriesService.getCredentials();
+        Optional<Token> userToken = Optional.ofNullable(authenticateUser(credentials.first, credentials.second));
+
         String url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "getFactory")
                 .build(factoryId).toString();
         LOG.debug("getFactory: " + url);
@@ -132,6 +131,9 @@ public class FactoryConnection {
     }
 
     public List<Factory> findMatchingFactories(String factoryName) {
+        Pair<String, String> credentials = DevopsFactoriesService.getCredentials();
+        Optional<Token> userToken = Optional.ofNullable(authenticateUser(credentials.first, credentials.second));
+
         List<Link> factoryLinks = null;
         Pair factoryNameParam = Pair.of("project.name", factoryName);
 
@@ -181,6 +183,9 @@ public class FactoryConnection {
     }
 
     public Factory updateFactory(Factory oldFactory, String repository, String branch, String commitId) {
+        Pair<String, String> credentials = DevopsFactoriesService.getCredentials();
+        Optional<Token> userToken = Optional.ofNullable(authenticateUser(credentials.first, credentials.second));
+
         // Get current factory data
         final Source source = oldFactory.getSource();
         final ImportSourceDescriptor sourceProject = source.getProject();
@@ -228,6 +233,9 @@ public class FactoryConnection {
     }
 
     public Factory createNewFactory(String name, String sourceLocation, String branch, String commitId) {
+        Pair<String, String> credentials = DevopsFactoriesService.getCredentials();
+        Optional<Token> userToken = Optional.ofNullable(authenticateUser(credentials.first, credentials.second));
+
         // Build new factory object
         Map<String, String> projectParams = Maps.newHashMap();
         projectParams.put("branch", branch);
