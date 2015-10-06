@@ -123,11 +123,11 @@ public class DevopsFactoriesService extends Service {
 
     protected void handlePushEvent(PushEvent contribution) {
         LOG.info("handlePushEvent");
-        LOG.info("contribution.getRef(): " + contribution.getRef()
-                + ", contribution.getRepository().getFullName(): " + contribution.getRepository().getFull_name()
-                + ", contribution.getRepository().getCreatedAt(): " + contribution.getRepository().getCreated_at()
-                + ", contribution.getRepository().getHtml_url(): " + contribution.getRepository().getHtml_url()
-                + ", contribution.getAfter(): " + contribution.getAfter());
+        LOG.info("contribution.ref: " + contribution.getRef()
+                + ", contribution.repository.full_name: " + contribution.getRepository().getFull_name()
+                + ", contribution.repository.created_at: " + contribution.getRepository().getCreated_at()
+                + ", contribution.repository.html_url: " + contribution.getRepository().getHtml_url()
+                + ", contribution.after: " + contribution.getAfter());
 
         // Get contribution data
         final String contribRepositoryHtmlUrl = contribution.getRepository().getHtml_url();
@@ -157,8 +157,9 @@ public class DevopsFactoriesService extends Service {
     public Response handlePullRequestEvent(PullRequestEvent prEvent) {
 
         LOG.info("handlePullRequestEvent");
-        LOG.info("PullRequest.head.repository: " + prEvent.getPull_request().getHead().getRepo().getHtml_url());
-        LOG.info("PullRequest.base.repository: " + prEvent.getPull_request().getBase().getRepo().getHtml_url());
+        LOG.info("pull_request.head.repository.html_url: " + prEvent.getPull_request().getHead().getRepo().getHtml_url());
+        LOG.info("pull_request.head.ref: " + prEvent.getPull_request().getHead().getRef());
+        LOG.info("pull_request.base.repository.html_url: " + prEvent.getPull_request().getBase().getRepo().getHtml_url());
 
         String action = prEvent.getAction();
         if ("closed".equals(action)) {
