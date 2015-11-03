@@ -24,7 +24,7 @@
         <version>3.13.2-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>codenvy-plugin-factories-mgt-client</artifactId>
+    <artifactId>codenvy-plugin-devops-factories-client</artifactId>
     <name>Codenvy Plugin :: DevOps Factories :: Client</name>
     <dependencies>
         <dependency>
