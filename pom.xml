@@ -16,7 +16,7 @@
     <parent>
         <artifactId>codenvy-plugin-parent</artifactId>
         <groupId>com.codenvy.plugin</groupId>
-        <version>3.13.0-SNAPSHOT</version>
+        <version>3.13.2-SNAPSHOT</version>
     </parent>
     <artifactId>codenvy-plugin-devops-factories-parent</artifactId>
     <packaging>pom</packaging>
@@ -25,9 +25,4 @@
         <module>codenvy-plugin-devops-factories-client</module>
         <module>codenvy-plugin-devops-factories-server</module>
     </modules>
-    <build>
-        <pluginManagement>
-            <plugins />
-        </pluginManagement>
-    </build>
 </project>
