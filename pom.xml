@@ -22,7 +22,6 @@
     <packaging>pom</packaging>
     <name>Codenvy Plugin :: DevOps Factories :: Parent</name>
     <modules>
-        <module>codenvy-plugin-devops-factories-client</module>
         <module>codenvy-plugin-devops-factories-server</module>
     </modules>
 </project>
