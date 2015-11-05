@@ -154,7 +154,7 @@ public class DevopsFactoriesService extends Service {
         });
     }
 
-    public Response handlePullRequestEvent(PullRequestEvent prEvent) {
+    protected void handlePullRequestEvent(PullRequestEvent prEvent) {
 
         LOG.info("handlePullRequestEvent");
         LOG.info("pull_request.head.repository.html_url: " + prEvent.getPull_request().getHead().getRepo().getHtml_url());
@@ -190,7 +190,6 @@ public class DevopsFactoriesService extends Service {
         } else {
             LOG.info("PullRequest Event action is " + action + ". We do not handle that.");
         }
-        return Response.ok().build();
     }
 
     protected Factory getFactoryForBranch(List<String> factoryIDs, String branch) {
