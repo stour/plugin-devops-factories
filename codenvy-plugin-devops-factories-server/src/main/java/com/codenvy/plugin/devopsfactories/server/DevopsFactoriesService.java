@@ -165,7 +165,6 @@ public class DevopsFactoriesService extends Service {
         if ("closed".equals(action)) {
             boolean isMerged = prEvent.getPull_request().getMerged();
             if (isMerged) {
-                final String prHeadRepositoryHtmlUrl = prEvent.getPull_request().getHead().getRepo().getHtml_url();
                 final String prHeadBranch = prEvent.getPull_request().getHead().getRef();
                 final String prHeadCommitId = prEvent.getPull_request().getHead().getSha();
 
@@ -173,7 +172,7 @@ public class DevopsFactoriesService extends Service {
                 final String prBaseRepositoryHtmlUrl = prEvent.getPull_request().getBase().getRepo().getHtml_url();
                 final String prBaseBranch = prEvent.getPull_request().getBase().getRef();
 
-                final List<String> factoryIDs = getFactoryIDsFromWebhook(prHeadRepositoryHtmlUrl);
+                final List<String> factoryIDs = getFactoryIDsFromWebhook(prBaseRepositoryHtmlUrl);
                 Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, prHeadBranch));
 
                 factory.ifPresent(f -> {
