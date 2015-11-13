@@ -123,11 +123,11 @@ public class DevopsFactoriesService extends Service {
 
     protected void handlePushEvent(PushEvent contribution) {
         LOG.info("handlePushEvent");
-        LOG.info("contribution.ref: " + contribution.getRef()
-                + ", contribution.repository.full_name: " + contribution.getRepository().getFull_name()
-                + ", contribution.repository.created_at: " + contribution.getRepository().getCreated_at()
-                + ", contribution.repository.html_url: " + contribution.getRepository().getHtml_url()
-                + ", contribution.after: " + contribution.getAfter());
+        LOG.info("contribution.ref: " + contribution.getRef());
+        LOG.info("contribution.repository.full_name: " + contribution.getRepository().getFull_name());
+        LOG.info("contribution.repository.created_at: " + contribution.getRepository().getCreated_at());
+        LOG.info("contribution.repository.html_url: " + contribution.getRepository().getHtml_url());
+        LOG.info("contribution.after: " + contribution.getAfter());
 
         // Get contribution data
         final String contribRepositoryHtmlUrl = contribution.getRepository().getHtml_url();
