@@ -280,6 +280,10 @@ public class FactoryConnection {
     public static Optional<String> getFactoryUrl(final List<Link> factoryLinks) {
         List<Link> createProjectLinks = factoryLinks.stream()
                 .filter(link -> "create-project".equals(link.getRel())).collect(Collectors.toList());
-        return Optional.of(createProjectLinks.get(0).getHref());
+        if (!createProjectLinks.isEmpty()) {
+            return Optional.of(createProjectLinks.get(0).getHref());
+        } else {
+            return Optional.empty();
+        }
     }
 }
