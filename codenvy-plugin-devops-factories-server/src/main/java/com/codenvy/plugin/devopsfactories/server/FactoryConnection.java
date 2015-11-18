@@ -69,7 +69,7 @@ public class FactoryConnection {
         this.baseUrl = baseUrl;
     }
 
-    protected Token authenticateUser(String username, String password) {
+    protected Token authenticateUser(String username, String password) throws ServerException {
         Token userToken = null;
         // Authenticate on Codenvy
         String url = fromUri(baseUrl).path(AuthenticationService.class).path(AuthenticationService.class, "authenticate")
@@ -79,16 +79,22 @@ public class FactoryConnection {
             userToken = HttpJsonHelper.post(Token.class, url, DtoFactory.getInstance().createDtoFromJson(myCredentials, Credentials.class));
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (ServerException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (UnauthorizedException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (ForbiddenException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (NotFoundException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (ConflictException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         }
         if (userToken != null) {
             LOG.debug("successfully authenticated with token " + userToken);
@@ -97,7 +103,7 @@ public class FactoryConnection {
 
     }
 
-    public Factory getFactory(String factoryId) {
+    public Factory getFactory(String factoryId) throws ServerException {
         Pair<String, String> credentials = DevopsFactoriesService.getCredentials();
         Optional<Token> userToken = Optional.ofNullable(authenticateUser(credentials.first, credentials.second));
 
@@ -116,21 +122,27 @@ public class FactoryConnection {
             }
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (ServerException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (UnauthorizedException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (ForbiddenException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (NotFoundException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (ConflictException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         }
         return factory;
     }
 
-    public List<Factory> findMatchingFactories(String factoryName) {
+    public List<Factory> findMatchingFactories(String factoryName) throws ServerException {
         Pair<String, String> credentials = DevopsFactoriesService.getCredentials();
         Optional<Token> userToken = Optional.ofNullable(authenticateUser(credentials.first, credentials.second));
 
@@ -151,16 +163,22 @@ public class FactoryConnection {
             }
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (ServerException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (UnauthorizedException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (ForbiddenException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (NotFoundException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (ConflictException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         }
 
         if (factoryLinks != null) {
@@ -182,7 +200,7 @@ public class FactoryConnection {
         return null;
     }
 
-    public Factory updateFactory(Factory oldFactory, String repository, String branch, String commitId) {
+    public Factory updateFactory(Factory oldFactory, String repository, String branch, String commitId) throws ServerException {
         Pair<String, String> credentials = DevopsFactoriesService.getCredentials();
         Optional<Token> userToken = Optional.ofNullable(authenticateUser(credentials.first, credentials.second));
 
@@ -218,21 +236,27 @@ public class FactoryConnection {
             }
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (ServerException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (UnauthorizedException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (ForbiddenException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (NotFoundException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         } catch (ConflictException e) {
             LOG.error(e.getMessage(), e);
+            throw new ServerException(e.getLocalizedMessage());
         }
         return newFactory;
     }
 
-    public Factory createNewFactory(String name, String sourceLocation, String branch, String commitId) {
+    public Factory createNewFactory(String name, String sourceLocation, String branch, String commitId) throws ServerException {
         Pair<String, String> credentials = DevopsFactoriesService.getCredentials();
         Optional<Token> userToken = Optional.ofNullable(authenticateUser(credentials.first, credentials.second));
 

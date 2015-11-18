@@ -20,9 +20,6 @@ import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 import com.wordnik.swagger.annotations.ApiResponse;
 import com.wordnik.swagger.annotations.ApiResponses;
-import org.eclipse.che.api.core.ConflictException;
-import org.eclipse.che.api.core.ForbiddenException;
-import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
@@ -42,6 +39,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
@@ -58,6 +56,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 
 @Api(value = "/devops",
         description = "DevOps factories manager")
@@ -92,42 +91,49 @@ public class DevopsFactoriesService extends Service {
                                       @PathParam("ws-id") String workspace,
                                       @ApiParam(value = "New contribution", required = true)
                                       @Context HttpServletRequest request)
-            throws ConflictException, ForbiddenException, ServerException, NotFoundException {
+            throws ServerException {
 
         LOG.info("githubWebhook");
+
+        Response response = null;
         String githubHeader = request.getHeader("X-GitHub-Event");
         switch (githubHeader) {
             case "push":
                 try {
                     ServletInputStream is = request.getInputStream();
                     PushEvent event = DtoFactory.getInstance().createDtoFromJson(is, PushEvent.class);
-                    handlePushEvent(event);
+                    response = handlePushEvent(event);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    LOG.error(e.getLocalizedMessage());
+                    throw new ServerException(e.getLocalizedMessage());
                 }
                 break;
             case "pull_request":
                 try {
                     ServletInputStream is = request.getInputStream();
                     PullRequestEvent event = DtoFactory.getInstance().createDtoFromJson(is, PullRequestEvent.class);
-                    handlePullRequestEvent(event);
+                    response = handlePullRequestEvent(event);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    LOG.error(e.getLocalizedMessage());
+                    throw new ServerException(e.getLocalizedMessage());
                 }
                 break;
             default:
+                response = Response.status(NOT_IMPLEMENTED).build();
                 break;
         }
-        return Response.ok().build();
+        return response;
     }
 
-    protected void handlePushEvent(PushEvent contribution) {
+    protected Response handlePushEvent(PushEvent contribution) throws ServerException {
         LOG.info("handlePushEvent");
         LOG.info("contribution.ref: " + contribution.getRef());
         LOG.info("contribution.repository.full_name: " + contribution.getRepository().getFull_name());
         LOG.info("contribution.repository.created_at: " + contribution.getRepository().getCreated_at());
         LOG.info("contribution.repository.html_url: " + contribution.getRepository().getHtml_url());
         LOG.info("contribution.after: " + contribution.getAfter());
+
+        Response response;
 
         // Get contribution data
         final String contribRepositoryHtmlUrl = contribution.getRepository().getHtml_url();
@@ -138,28 +144,47 @@ public class DevopsFactoriesService extends Service {
         final List<String> factoryIDs = getFactoryIDsFromWebhook(contribRepositoryHtmlUrl);
         Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, contribBranch));
 
-        factory.ifPresent(f -> {
+        if (factory.isPresent()) {
+            Factory f = factory.get();
             // Update factory with new commitId
             Optional<Factory> updatedFactory = Optional.ofNullable(factoryConnection.updateFactory(f, null, null, contribCommitId));
 
-            updatedFactory.ifPresent(uf -> {
+            if (updatedFactory.isPresent()) {
+                Factory uf = updatedFactory.get();
                 List<Link> factoryLinks = uf.getLinks();
                 Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
 
-                // Display factory link within third-party services (using connectors configured for the factory)
-                List<Connector> connectors = getConnectors(uf.getId());
-                factoryUrl.ifPresent(
-                        url -> connectors.forEach(connector -> connector.addFactoryLink(url)));
-            });
-        });
+                if (factoryUrl.isPresent()) {
+                    String url = factoryUrl.get();
+                    // Display factory link within third-party services (using connectors configured for the factory)
+                    List<Connector> connectors = getConnectors(uf.getId());
+                    connectors.forEach(connector -> connector.addFactoryLink(url));
+                    response = Response.ok().build();
+                } else {
+                    GenericEntity<String> entity = new GenericEntity<String>("Updated factory do not contain mandatory create-project link") {};
+                    response = Response.accepted(entity).build();
+                }
+            } else {
+                GenericEntity<String> entity = new GenericEntity<String>("Factory not updated with commit " + contribCommitId) {};
+                response = Response.accepted(entity).build();
+            }
+        } else {
+            GenericEntity<String> entity = new GenericEntity<String>("No factory found for branch " + contribBranch) {};
+            response = Response.accepted(entity).build();
+        }
+        return response;
     }
 
-    protected void handlePullRequestEvent(PullRequestEvent prEvent) {
+    protected Response handlePullRequestEvent(PullRequestEvent prEvent) throws ServerException {
 
         LOG.info("handlePullRequestEvent");
         LOG.info("pull_request.head.repository.html_url: " + prEvent.getPull_request().getHead().getRepo().getHtml_url());
         LOG.info("pull_request.head.ref: " + prEvent.getPull_request().getHead().getRef());
+        LOG.info("pull_request.head.sha: " + prEvent.getPull_request().getHead().getSha());
         LOG.info("pull_request.base.repository.html_url: " + prEvent.getPull_request().getBase().getRepo().getHtml_url());
+        LOG.info("pull_request.base.ref: " + prEvent.getPull_request().getBase().getRef());
+
+        Response response;
 
         String action = prEvent.getAction();
         if ("closed".equals(action)) {
@@ -175,23 +200,35 @@ public class DevopsFactoriesService extends Service {
                 final List<String> factoryIDs = getFactoryIDsFromWebhook(prBaseRepositoryHtmlUrl);
                 Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, prHeadBranch));
 
-                factory.ifPresent(f -> {
+                if (factory.isPresent()) {
+                    Factory f = factory.get();
                     // Update factory with origin repository & branch name
                     Optional<Factory> updatedFactory =
                             Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prBaseBranch, prHeadCommitId));
-                    updatedFactory.ifPresent(uf -> {
-                        LOG.info("Factory successfully updated with branch " + prBaseBranch + " (at commit: " + prEvent.getPull_request().getHead().getSha() + ")");
-                    });
-                });
+                    if (updatedFactory.isPresent()) {
+                        LOG.info("Factory successfully updated with branch " + prBaseBranch + " at commit " + prHeadCommitId);
+                        // TODO Remove factory from Github webhook
+                        response = Response.ok().build();
+                    } else {
+                        GenericEntity<String> entity = new GenericEntity<String>("Factory not updated with branch " + prBaseBranch + " & commit " + prHeadCommitId) {};
+                        response = Response.accepted(entity).build();
+                    }
+                } else {
+                    GenericEntity<String> entity = new GenericEntity<String>("No factory found for branch " + prHeadBranch) {};
+                    response = Response.accepted(entity).build();
+                }
             } else {
-                LOG.info("Pull Request was closed with unmerged commits !");
+                GenericEntity<String> entity = new GenericEntity<String>("Pull Request was closed with unmerged commits !") {};
+                response = Response.accepted(entity).build();
             }
         } else {
-            LOG.info("PullRequest Event action is " + action + ". We do not handle that.");
+            GenericEntity<String> entity = new GenericEntity<String>("PullRequest Event action is " + action + ". We do not handle that.") {};
+            response = Response.accepted(entity).build();
         }
+        return response;
     }
 
-    protected Factory getFactoryForBranch(List<String> factoryIDs, String branch) {
+    protected Factory getFactoryForBranch(List<String> factoryIDs, String branch) throws ServerException {
         Factory factory = null;
         for (String factoryId : factoryIDs) {
             Optional<Factory> obtainedFactory = Optional.ofNullable(factoryConnection.getFactory(factoryId));
@@ -207,7 +244,6 @@ public class DevopsFactoriesService extends Service {
                 }
             }
         }
-        if (factory == null) LOG.info("No factory found for branch " + branch);
         return factory;
     }
 
