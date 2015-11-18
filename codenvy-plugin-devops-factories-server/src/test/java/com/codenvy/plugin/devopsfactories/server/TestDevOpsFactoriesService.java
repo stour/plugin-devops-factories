@@ -39,7 +39,7 @@ public class TestDevOpsFactoriesService {
     private final static String REQUEST_HEADER_GITHUB_EVENT = "X-GitHub-Event";
 
     @Test
-    public void testGithubWebhookPushEvent() throws Exception {
+    public void testGithubWebhookPushEventNoConnector() throws Exception {
         FactoryConnection mockFactoryConnection = prepareFactoryConnection();
         DevopsFactoriesService devopsFactoriesService = new DevopsFactoriesService(mockFactoryConnection);
 
@@ -49,7 +49,7 @@ public class TestDevOpsFactoriesService {
     }
 
     @Test
-    public void testGithubWebhookPullRequestEvent() throws Exception {
+    public void testGithubWebhookPullRequestEventNoConnector() throws Exception {
         FactoryConnection mockFactoryConnection = prepareFactoryConnection();
         DevopsFactoriesService devopsFactoriesService = new DevopsFactoriesService(mockFactoryConnection);
 
