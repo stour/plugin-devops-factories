@@ -20,6 +20,7 @@ import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 import com.wordnik.swagger.annotations.ApiResponse;
 import com.wordnik.swagger.annotations.ApiResponses;
+
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
@@ -59,14 +60,14 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 
 @Api(value = "/devops",
-        description = "DevOps factories manager")
+     description = "DevOps factories manager")
 @Path("/devops/{ws-id}")
 public class DevopsFactoriesService extends Service {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DevopsFactoriesService.class);
-    private static final String CONNECTORS_PROPERTIES_FILENAME = "connectors.properties";
+    private static final Logger LOG                             = LoggerFactory.getLogger(DevopsFactoriesService.class);
+    private static final String CONNECTORS_PROPERTIES_FILENAME  = "connectors.properties";
     private static final String CREDENTIALS_PROPERTIES_FILENAME = "credentials.properties";
-    private static final String WEBHOOKS_PROPERTIES_FILENAME = "webhooks.properties";
+    private static final String WEBHOOKS_PROPERTIES_FILENAME    = "webhooks.properties";
 
     private final FactoryConnection factoryConnection;
 
@@ -76,7 +77,7 @@ public class DevopsFactoriesService extends Service {
     }
 
     @ApiOperation(value = "Notify a new contribution on a GitHub project",
-            response = Response.class)
+                  response = Response.class)
     @ApiResponses({@ApiResponse(
             code = 200,
             message = "OK"
@@ -88,9 +89,9 @@ public class DevopsFactoriesService extends Service {
     @Path("/github-webhook")
     @Consumes(APPLICATION_JSON)
     public Response githubWebhook(@ApiParam(value = "ID of workspace to consider", required = true)
-                                      @PathParam("ws-id") String workspace,
-                                      @ApiParam(value = "New contribution", required = true)
-                                      @Context HttpServletRequest request)
+                                  @PathParam("ws-id") String workspace,
+                                  @ApiParam(value = "New contribution", required = true)
+                                  @Context HttpServletRequest request)
             throws ServerException {
 
         LOG.info("githubWebhook");
@@ -161,7 +162,8 @@ public class DevopsFactoriesService extends Service {
                     connectors.forEach(connector -> connector.addFactoryLink(url));
                     response = Response.ok().build();
                 } else {
-                    GenericEntity<String> entity = new GenericEntity<String>("Updated factory do not contain mandatory create-project link") {};
+                    GenericEntity<String> entity =
+                            new GenericEntity<String>("Updated factory do not contain mandatory create-project link") {};
                     response = Response.accepted(entity).build();
                 }
             } else {
@@ -210,7 +212,8 @@ public class DevopsFactoriesService extends Service {
                         // TODO Remove factory from Github webhook
                         response = Response.ok().build();
                     } else {
-                        GenericEntity<String> entity = new GenericEntity<String>("Factory not updated with branch " + prBaseBranch + " & commit " + prHeadCommitId) {};
+                        GenericEntity<String> entity = new GenericEntity<String>(
+                                "Factory not updated with branch " + prBaseBranch + " & commit " + prHeadCommitId) {};
                         response = Response.accepted(entity).build();
                     }
                 } else {
@@ -222,7 +225,8 @@ public class DevopsFactoriesService extends Service {
                 response = Response.accepted(entity).build();
             }
         } else {
-            GenericEntity<String> entity = new GenericEntity<String>("PullRequest Event action is " + action + ". We do not handle that.") {};
+            GenericEntity<String> entity =
+                    new GenericEntity<String>("PullRequest Event action is " + action + ". We do not handle that.") {};
             response = Response.accepted(entity).build();
         }
         return response;
@@ -302,23 +306,23 @@ public class DevopsFactoriesService extends Service {
         connectorsProperties.ifPresent(properties -> {
             Set<String> keySet = properties.stringPropertyNames();
             keySet.stream()
-                    .filter(key -> factoryId.equals(properties.getProperty(key).split(",")[1]))
-                    .forEach(key -> {
-                        String value = properties.getProperty(key);
-                        String[] valueSplit = value.split(",");
-                        switch (valueSplit[0]) {
-                            case "jenkins":
-                                JenkinsConnector jenkinsConnector = new JenkinsConnector(valueSplit[2], valueSplit[3]);
-                                connectors.add(jenkinsConnector);
-                                LOG.debug("new JenkinsConnector(" + valueSplit[2] + ", " + valueSplit[3] + ")");
-                                break;
-                            case "jira":
-                                LOG.debug("Object JIRA connector not implemented !");
-                                break;
-                            default:
-                                break;
-                        }
-                    });
+                  .filter(key -> factoryId.equals(properties.getProperty(key).split(",")[1]))
+                  .forEach(key -> {
+                      String value = properties.getProperty(key);
+                      String[] valueSplit = value.split(",");
+                      switch (valueSplit[0]) {
+                          case "jenkins":
+                              JenkinsConnector jenkinsConnector = new JenkinsConnector(valueSplit[2], valueSplit[3]);
+                              connectors.add(jenkinsConnector);
+                              LOG.debug("new JenkinsConnector(" + valueSplit[2] + ", " + valueSplit[3] + ")");
+                              break;
+                          case "jira":
+                              LOG.debug("Object JIRA connector not implemented !");
+                              break;
+                          default:
+                              break;
+                      }
+                  });
         });
         return connectors;
     }

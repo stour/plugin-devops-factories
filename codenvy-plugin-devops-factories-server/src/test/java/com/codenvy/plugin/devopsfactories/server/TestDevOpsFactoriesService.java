@@ -11,11 +11,9 @@
 package com.codenvy.plugin.devopsfactories.server;
 
 import org.eclipse.che.api.factory.dto.Factory;
-import org.eclipse.che.commons.lang.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.servlet.ServletInputStream;

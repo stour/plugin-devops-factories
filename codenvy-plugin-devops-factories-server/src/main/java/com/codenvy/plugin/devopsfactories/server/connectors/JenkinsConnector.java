@@ -41,9 +41,6 @@ import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 
-/**
- * Created by stour on 09/09/15.
- */
 public class JenkinsConnector implements Connector {
 
     private static final Logger LOG = LoggerFactory.getLogger(JenkinsConnector.class);

@@ -12,10 +12,6 @@ package com.codenvy.plugin.devopsfactories.shared;
 
 import org.eclipse.che.dto.shared.DTO;
 
-/**
- * @author stour
- */
-
 @DTO
 public interface PullRequestEvent {
 

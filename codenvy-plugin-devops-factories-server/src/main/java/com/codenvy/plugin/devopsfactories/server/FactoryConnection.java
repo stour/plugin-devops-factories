@@ -56,9 +56,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static javax.ws.rs.core.UriBuilder.fromUri;
 
-/**
- * Created by stour on 10/09/15.
- */
 public class FactoryConnection {
 
     private static final Logger LOG = LoggerFactory.getLogger(FactoryConnection.class);
@@ -74,7 +71,7 @@ public class FactoryConnection {
         Token userToken = null;
         // Authenticate on Codenvy
         String url = fromUri(baseUrl).path(AuthenticationService.class).path(AuthenticationService.class, "authenticate")
-                .build().toString();
+                                     .build().toString();
         try {
             String myCredentials = "{ \"username\": \"" + username + "\", \"password\": \"" + password + "\" }";
             userToken = HttpJsonHelper.post(Token.class, url, DtoFactory.getInstance().createDtoFromJson(myCredentials, Credentials.class));
@@ -109,7 +106,7 @@ public class FactoryConnection {
         Optional<Token> userToken = Optional.ofNullable(authenticateUser(credentials.first, credentials.second));
 
         String url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "getFactory")
-                .build(factoryId).toString();
+                                     .build(factoryId).toString();
         LOG.debug("getFactory: " + url);
 
         Factory factory = null;
@@ -152,7 +149,7 @@ public class FactoryConnection {
 
         // Check if factories exist for the given attributes
         String url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "getFactoryByAttribute")
-                .build().toString();
+                                     .build().toString();
         Link lUrl = DtoFactory.newDto(Link.class).withHref(url).withMethod("GET");
         try {
             if (userToken.isPresent()) {
@@ -224,7 +221,7 @@ public class FactoryConnection {
         // Update factory
         final String factoryId = updatedFactory.getId();
         String url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "updateFactory")
-                .build(factoryId).toString();
+                                     .build(factoryId).toString();
 
         Factory newFactory = null;
         try {
@@ -266,10 +263,10 @@ public class FactoryConnection {
         projectParams.put("branch", branch);
         projectParams.put("commitId", commitId);
         ImportSourceDescriptor sourceProject = DtoFactory.newDto(ImportSourceDescriptor.class).withType("git")
-                .withLocation(sourceLocation).withParameters(projectParams);
+                                                         .withLocation(sourceLocation).withParameters(projectParams);
         Source source = DtoFactory.newDto(Source.class).withProject(sourceProject);
         NewProject project = DtoFactory.newDto(NewProject.class).withName(name).withVisibility("public")
-                .withType("blank");
+                                       .withType("blank");
         Factory postFactory = DtoFactory.newDto(Factory.class).withV("2.1").withSource(source).withProject(project);
 
         // Create factory
@@ -277,7 +274,7 @@ public class FactoryConnection {
         if (userToken.isPresent()) {
             Token token = userToken.get();
             url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "saveFactory")
-                    .queryParam("token", token.getValue()).build().toString();
+                                  .queryParam("token", token.getValue()).build().toString();
         } else {
             url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "saveFactory").build().toString();
         }
@@ -287,7 +284,7 @@ public class FactoryConnection {
         String postFactoryString = DtoFactory.getInstance().toJson(postFactory);
         FormDataMultiPart formDataMultiPart = new FormDataMultiPart().field("factoryUrl", postFactoryString);
         Client client = ClientBuilder.newClient()
-                .register(MultiPartWriter.class).register(MultiPartReaderClientSide.class);
+                                     .register(MultiPartWriter.class).register(MultiPartReaderClientSide.class);
         WebTarget target = client.target(url);
         Invocation.Builder builder = target.request(APPLICATION_JSON).header(HttpHeaders.CONTENT_TYPE, MULTIPART_FORM_DATA);
         Response response = builder.buildPost(Entity.entity(formDataMultiPart, MULTIPART_FORM_DATA)).invoke();
@@ -295,7 +292,7 @@ public class FactoryConnection {
         if (response.getStatus() == 200) {
             String responseString = response.readEntity(String.class);
             newFactory = DtoFactory.getInstance().createDtoFromJson(responseString, Factory.class);
-        }  else {
+        } else {
             LOG.error(response.getStatus() + " - " + response.readEntity(String.class));
         }
 
@@ -304,7 +301,7 @@ public class FactoryConnection {
 
     public static Optional<String> getFactoryUrl(final List<Link> factoryLinks) {
         List<Link> createProjectLinks = factoryLinks.stream()
-                .filter(link -> "create-project".equals(link.getRel())).collect(Collectors.toList());
+                                                    .filter(link -> "create-project".equals(link.getRel())).collect(Collectors.toList());
         if (!createProjectLinks.isEmpty()) {
             return Optional.of(createProjectLinks.get(0).getHref());
         } else {

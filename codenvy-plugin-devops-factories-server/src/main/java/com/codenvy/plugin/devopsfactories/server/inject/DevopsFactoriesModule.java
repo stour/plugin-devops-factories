@@ -12,6 +12,7 @@ package com.codenvy.plugin.devopsfactories.server.inject;
 
 import com.codenvy.plugin.devopsfactories.server.DevopsFactoriesService;
 import com.google.inject.AbstractModule;
+
 import org.eclipse.che.inject.DynaModule;
 
 @DynaModule

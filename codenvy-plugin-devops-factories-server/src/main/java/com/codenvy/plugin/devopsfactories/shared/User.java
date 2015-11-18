@@ -12,9 +12,6 @@ package com.codenvy.plugin.devopsfactories.shared;
 
 import org.eclipse.che.dto.shared.DTO;
 
-/**
- * Created by stour on 09/09/15.
- */
 @DTO
 public interface User {
     String getName();

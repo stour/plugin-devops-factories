@@ -14,10 +14,6 @@ import org.eclipse.che.dto.shared.DTO;
 
 import java.util.List;
 
-/**
- * Created by stournie on 09/09/15.
- */
-
 @DTO
 public interface PushEvent {
 

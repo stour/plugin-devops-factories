@@ -10,9 +10,6 @@
  *******************************************************************************/
 package com.codenvy.plugin.devopsfactories.server.connectors;
 
-/**
- * Created by stour on 10/09/15.
- */
 public interface Connector {
 
     void addFactoryLink(String factoryUrl);
