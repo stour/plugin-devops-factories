@@ -1,0 +1,137 @@
+{
+  "ide": {
+    "onAppLoaded": null,
+    "onProjectOpened": {
+      "actions": [
+        {
+          "properties": {},
+          "id": "runApp"
+        }
+      ]
+    },
+    "onAppClosed": null
+  },
+  "project": {
+    "name": "dashboard--MKTG-341",
+    "contentRoot": null,
+    "modules": [],
+    "generatorDescription": null,
+    "description": "User Dashboard V2 (branch MKTG-341)",
+    "visibility": "public",
+    "builders": null,
+    "runners": {
+      "configs": {
+        "project:/docker/customdocker": {
+          "ram": 512,
+          "variables": {},
+          "options": {}
+        }
+      },
+      "default": "project:/docker/customdocker"
+    },
+    "mixinTypes": [
+      "contribution"
+    ],
+    "type": "GulpJS",
+    "attributes": {
+      "contribute_branch": [
+        "master"
+      ],
+      "contribute": [
+        "github"
+      ],
+      "contribute_mode": [
+        "contribute"
+      ]
+    }
+  },
+  "workspace": {
+    "location": "acceptor",
+    "resources": {
+      "runnerTimeout": 900,
+      "builderTimeout": null,
+      "runnerRam": null
+    },
+    "type": "temp"
+  },
+  "source": {
+    "runners": {
+      "/docker/customdocker": {
+        "location": "https://gist.githubusercontent.com/stour/458f8e4c499447cb2d1c/raw/c1c0a16161f69562e2ce916a1f0728e928cd6422/gistfile1.txt",
+        "parameters": {}
+      }
+    },
+    "project": {
+      "location": "https://github.com/codenvy-demos/dashboard",
+      "type": "git",
+      "parameters": {
+        "keepVcs": "true",
+        "commitId": "82d6fc75c8e59fe710fe0b6f04eeba153291c18b",
+        "branch": "MKTG-341"
+      }
+    }
+  },
+  "v": "2.1",
+  "policies": null,
+  "creator": {
+    "name": "Stephane stephane.tournie@serli.com",
+    "accountId": null,
+    "email": null,
+    "created": 1443625840227,
+    "userId": "user4b2uefsv2r76txr5"
+  },
+  "button": null,
+  "actions": null,
+  "id": "fakeFactoryId",
+  "links": [
+    {
+      "produces": "application/json",
+      "rel": "self",
+      "href": "http://devops.codenvy-dev.com/api/factory/fakeFactoryId",
+      "method": "GET",
+      "parameters": []
+    },
+    {
+      "produces": "text/plain",
+      "rel": "snippet/markdown",
+      "href": "http://devops.codenvy-dev.com/api/factory/fakeFactoryId/snippet?type=markdown",
+      "method": "GET",
+      "parameters": []
+    },
+    {
+      "produces": "text/plain",
+      "rel": "snippet/url",
+      "href": "http://devops.codenvy-dev.com/api/factory/fakeFactoryId/snippet?type=url",
+      "method": "GET",
+      "parameters": []
+    },
+    {
+      "produces": "text/plain",
+      "rel": "snippet/html",
+      "href": "http://devops.codenvy-dev.com/api/factory/fakeFactoryId/snippet?type=html",
+      "method": "GET",
+      "parameters": []
+    },
+    {
+      "produces": "text/plain",
+      "rel": "snippet/iframe",
+      "href": "http://devops.codenvy-dev.com/api/factory/fakeFactoryId/snippet?type=iframe",
+      "method": "GET",
+      "parameters": []
+    },
+    {
+      "produces": "text/html",
+      "rel": "create-project",
+      "href": "http://devops.codenvy-dev.com/f?id=fakeFactoryId",
+      "method": "GET",
+      "parameters": []
+    },
+    {
+      "produces": "text/plain",
+      "rel": "accepted",
+      "href": "http://devops.codenvy-dev.com/api/analytics/public-metric/factory_used?factory=http%3A%2F%2Fdevops.codenvy-dev.com%2Ff%3Fid%3DfakeFactoryId",
+      "method": "GET",
+      "parameters": []
+    }
+  ]
+}
