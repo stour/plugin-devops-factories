@@ -95,7 +95,7 @@ public class DevopsFactoriesService extends Service {
 
         LOG.info("githubWebhook");
 
-        Response response = null;
+        Response response;
         String githubHeader = request.getHeader("X-GitHub-Event");
         switch (githubHeader) {
             case "push":
