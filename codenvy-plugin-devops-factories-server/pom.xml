@@ -213,6 +213,28 @@
         </dependency>
     </dependencies>
     <build>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <testSourceDirectory>src/test/java</testSourceDirectory>
+        <outputDirectory>target/classes</outputDirectory>
+        <resources>
+            <resource>
+                <directory>src/main/java</directory>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>${dto.generator.out.directory}</directory>
+            </resource>
+        </resources>
+        <testResources>
+            <testResource>
+                <directory>src/test/java</directory>
+            </testResource>
+            <testResource>
+                <directory>src/test/resources</directory>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -290,7 +312,7 @@
                                 <package>com.codenvy.plugin.devopsfactories.shared</package>
                             </dtoPackages>
                             <outputDirectory>${dto.generator.out.directory}</outputDirectory>
-                            <genClassName>com.codenvy.plugin.devopsfactories.dto.DtoServerImpls</genClassName>
+                            <genClassName>com.codenvy.plugin.devopsfactories.server.dto.DtoServerImpls</genClassName>
                             <impl>server</impl>
                         </configuration>
                     </execution>
