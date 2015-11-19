@@ -67,53 +67,15 @@ public class FactoryConnection {
         this.baseUrl = baseUrl;
     }
 
-    protected Token authenticateUser(String username, String password) throws ServerException {
-        Token userToken = null;
-        // Authenticate on Codenvy
-        String url = fromUri(baseUrl).path(AuthenticationService.class).path(AuthenticationService.class, "authenticate")
-                                     .build().toString();
-        try {
-            String myCredentials = "{ \"username\": \"" + username + "\", \"password\": \"" + password + "\" }";
-            userToken = HttpJsonHelper.post(Token.class, url, DtoFactory.getInstance().createDtoFromJson(myCredentials, Credentials.class));
-        } catch (IOException e) {
-            LOG.error(e.getMessage(), e);
-            throw new ServerException(e.getLocalizedMessage());
-        } catch (ServerException e) {
-            LOG.error(e.getMessage(), e);
-            throw new ServerException(e.getLocalizedMessage());
-        } catch (UnauthorizedException e) {
-            LOG.error(e.getMessage(), e);
-            throw new ServerException(e.getLocalizedMessage());
-        } catch (ForbiddenException e) {
-            LOG.error(e.getMessage(), e);
-            throw new ServerException(e.getLocalizedMessage());
-        } catch (NotFoundException e) {
-            LOG.error(e.getMessage(), e);
-            throw new ServerException(e.getLocalizedMessage());
-        } catch (ConflictException e) {
-            LOG.error(e.getMessage(), e);
-            throw new ServerException(e.getLocalizedMessage());
-        }
-        if (userToken != null) {
-            LOG.debug("successfully authenticated with token " + userToken);
-        }
-        return userToken;
-
-    }
-
-    public Factory getFactory(String factoryId) throws ServerException {
-        Pair<String, String> credentials = DevopsFactoriesService.getCredentials();
-        Optional<Token> userToken = Optional.ofNullable(authenticateUser(credentials.first, credentials.second));
-
+    public Factory getFactory(String factoryId, Token userToken) throws ServerException {
         String url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "getFactory")
                                      .build(factoryId).toString();
         LOG.debug("getFactory: " + url);
 
         Factory factory = null;
         try {
-            if (userToken.isPresent()) {
-                Token token = userToken.get();
-                Pair tokenParam = Pair.of("token", token.getValue());
+            if (userToken != null) {
+                Pair tokenParam = Pair.of("token", userToken.getValue());
                 factory = HttpJsonHelper.get(Factory.class, url, tokenParam);
             } else {
                 factory = HttpJsonHelper.get(Factory.class, url);
@@ -140,11 +102,8 @@ public class FactoryConnection {
         return factory;
     }
 
-    public List<Factory> findMatchingFactories(String factoryName) throws ServerException {
-        Pair<String, String> credentials = DevopsFactoriesService.getCredentials();
-        Optional<Token> userToken = Optional.ofNullable(authenticateUser(credentials.first, credentials.second));
-
-        List<Link> factoryLinks = null;
+    public List<Factory> findMatchingFactories(String factoryName, Token userToken) throws ServerException {
+        List<Link> factoryLinks;
         Pair factoryNameParam = Pair.of("project.name", factoryName);
 
         // Check if factories exist for the given attributes
@@ -152,9 +111,8 @@ public class FactoryConnection {
                                      .build().toString();
         Link lUrl = DtoFactory.newDto(Link.class).withHref(url).withMethod("GET");
         try {
-            if (userToken.isPresent()) {
-                Token token = userToken.get();
-                Pair tokenParam = Pair.of("token", token.getValue());
+            if (userToken != null) {
+                Pair tokenParam = Pair.of("token", userToken.getValue());
                 factoryLinks = HttpJsonHelper.requestArray(Link.class, lUrl, factoryNameParam, tokenParam);
             } else {
                 factoryLinks = HttpJsonHelper.requestArray(Link.class, lUrl, factoryNameParam);
@@ -188,7 +146,7 @@ public class FactoryConnection {
                 String[] hrefSplit = href.split("/");
                 String factoryId = hrefSplit[hrefSplit.length - 1];
 
-                Optional<Factory> factory = Optional.ofNullable(getFactory(factoryId));
+                Optional<Factory> factory = Optional.ofNullable(getFactory(factoryId, userToken));
                 factory.ifPresent(f -> factories.add(f));
             }
             LOG.debug("findMatchingFactories() returned " + factories.size() + " factories");
@@ -198,9 +156,7 @@ public class FactoryConnection {
         return null;
     }
 
-    public Factory updateFactory(Factory oldFactory, String repository, String branch, String commitId) throws ServerException {
-        Pair<String, String> credentials = DevopsFactoriesService.getCredentials();
-        Optional<Token> userToken = Optional.ofNullable(authenticateUser(credentials.first, credentials.second));
+    public Factory updateFactory(Factory oldFactory, String repository, String branch, String commitId, Token userToken) throws ServerException {
 
         // Get current factory data
         final Source source = oldFactory.getSource();
@@ -225,9 +181,8 @@ public class FactoryConnection {
 
         Factory newFactory = null;
         try {
-            if (userToken.isPresent()) {
-                Token token = userToken.get();
-                Pair tokenParam = Pair.of("token", token.getValue());
+            if (userToken != null) {
+                Pair tokenParam = Pair.of("token", userToken.getValue());
                 newFactory = HttpJsonHelper.put(Factory.class, url, updatedFactory, tokenParam);
             } else {
                 newFactory = HttpJsonHelper.put(Factory.class, url, updatedFactory);
@@ -254,9 +209,7 @@ public class FactoryConnection {
         return newFactory;
     }
 
-    public Factory createNewFactory(String name, String sourceLocation, String branch, String commitId) throws ServerException {
-        Pair<String, String> credentials = DevopsFactoriesService.getCredentials();
-        Optional<Token> userToken = Optional.ofNullable(authenticateUser(credentials.first, credentials.second));
+    public Factory createNewFactory(String name, String sourceLocation, String branch, String commitId, Token userToken) throws ServerException {
 
         // Build new factory object
         Map<String, String> projectParams = Maps.newHashMap();
@@ -271,10 +224,9 @@ public class FactoryConnection {
 
         // Create factory
         String url;
-        if (userToken.isPresent()) {
-            Token token = userToken.get();
+        if (userToken != null) {
             url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "saveFactory")
-                                  .queryParam("token", token.getValue()).build().toString();
+                                  .queryParam("token", userToken.getValue()).build().toString();
         } else {
             url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "saveFactory").build().toString();
         }

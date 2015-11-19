@@ -21,6 +21,7 @@ import com.wordnik.swagger.annotations.ApiParam;
 import com.wordnik.swagger.annotations.ApiResponse;
 import com.wordnik.swagger.annotations.ApiResponses;
 
+import org.eclipse.che.api.auth.shared.dto.Token;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
@@ -69,10 +70,12 @@ public class DevopsFactoriesService extends Service {
     private static final String CREDENTIALS_PROPERTIES_FILENAME = "credentials.properties";
     private static final String WEBHOOKS_PROPERTIES_FILENAME    = "webhooks.properties";
 
+    private final AuthConnection authConnection;
     private final FactoryConnection factoryConnection;
 
     @Inject
-    public DevopsFactoriesService(final FactoryConnection factoryConnection) {
+    public DevopsFactoriesService(final AuthConnection authConnection, final FactoryConnection factoryConnection) {
+        this.authConnection = authConnection;
         this.factoryConnection = factoryConnection;
     }
 
@@ -136,6 +139,9 @@ public class DevopsFactoriesService extends Service {
 
         Response response;
 
+        Pair<String,String> credentials = getCredentials();
+        Token token = authConnection.authenticateUser(credentials.first,  credentials.second);
+
         // Get contribution data
         final String contribRepositoryHtmlUrl = contribution.getRepository().getHtml_url();
         final String[] contribRefSplit = contribution.getRef().split("/");
@@ -143,12 +149,12 @@ public class DevopsFactoriesService extends Service {
         final String contribCommitId = contribution.getAfter();
 
         final List<String> factoryIDs = getFactoryIDsFromWebhook(contribRepositoryHtmlUrl);
-        Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, contribBranch));
+        Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, contribBranch, token));
 
         if (factory.isPresent()) {
             Factory f = factory.get();
             // Update factory with new commitId
-            Optional<Factory> updatedFactory = Optional.ofNullable(factoryConnection.updateFactory(f, null, null, contribCommitId));
+            Optional<Factory> updatedFactory = Optional.ofNullable(factoryConnection.updateFactory(f, null, null, contribCommitId, token));
 
             if (updatedFactory.isPresent()) {
                 Factory uf = updatedFactory.get();
@@ -188,6 +194,9 @@ public class DevopsFactoriesService extends Service {
 
         Response response;
 
+        Pair<String,String> credentials = getCredentials();
+        Token token = authConnection.authenticateUser(credentials.first,  credentials.second);
+
         String action = prEvent.getAction();
         if ("closed".equals(action)) {
             boolean isMerged = prEvent.getPull_request().getMerged();
@@ -200,13 +209,13 @@ public class DevopsFactoriesService extends Service {
                 final String prBaseBranch = prEvent.getPull_request().getBase().getRef();
 
                 final List<String> factoryIDs = getFactoryIDsFromWebhook(prBaseRepositoryHtmlUrl);
-                Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, prHeadBranch));
+                Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, prHeadBranch, token));
 
                 if (factory.isPresent()) {
                     Factory f = factory.get();
                     // Update factory with origin repository & branch name
                     Optional<Factory> updatedFactory =
-                            Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prBaseBranch, prHeadCommitId));
+                            Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prBaseBranch, prHeadCommitId, token));
                     if (updatedFactory.isPresent()) {
                         LOG.info("Factory successfully updated with branch " + prBaseBranch + " at commit " + prHeadCommitId);
                         // TODO Remove factory from Github webhook
@@ -232,10 +241,10 @@ public class DevopsFactoriesService extends Service {
         return response;
     }
 
-    protected Factory getFactoryForBranch(List<String> factoryIDs, String branch) throws ServerException {
+    protected Factory getFactoryForBranch(List<String> factoryIDs, String branch, Token token) throws ServerException {
         Factory factory = null;
         for (String factoryId : factoryIDs) {
-            Optional<Factory> obtainedFactory = Optional.ofNullable(factoryConnection.getFactory(factoryId));
+            Optional<Factory> obtainedFactory = Optional.ofNullable(factoryConnection.getFactory(factoryId, token));
             if (obtainedFactory.isPresent()) {
                 final Factory f = obtainedFactory.get();
                 ImportSourceDescriptor project = f.getSource().getProject();
