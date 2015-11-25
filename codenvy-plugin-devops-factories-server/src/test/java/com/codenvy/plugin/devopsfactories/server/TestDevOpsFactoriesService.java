@@ -10,6 +10,9 @@
  *******************************************************************************/
 package com.codenvy.plugin.devopsfactories.server;
 
+import com.codenvy.plugin.devopsfactories.server.preferences.WebhooksProvider;
+import com.codenvy.plugin.devopsfactories.shared.Webhook;
+
 import org.eclipse.che.api.auth.shared.dto.Token;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.factory.dto.Factory;
@@ -41,9 +44,17 @@ public class TestDevOpsFactoriesService {
     private final static String REQUEST_HEADER_GITHUB_EVENT = "X-GitHub-Event";
 
     private DevopsFactoriesService fakeDevopsFactoriesService;
+    private Webhook                fakeWebhook;
+    private String                 fakeWebhookId;
 
     @Before
     public void setUp() throws Exception {
+        URL webhookResource = getClass().getResource("/webhook.json");
+        fakeWebhook = DtoFactory.getInstance().createDtoFromJson(readFile(webhookResource.getFile(), StandardCharsets.UTF_8),
+                                                                 Webhook.class);
+        fakeWebhookId = WebhooksProvider.constructWebhookId(fakeWebhook.getRepositoryUrl());
+        WebhooksProvider mockWebhooksProvider = prepareWebhookProvider(fakeWebhookId, fakeWebhook);
+
         URL factoryResource = getClass().getResource("/factory-MKTG-341.json");
         Factory fakeFactory = DtoFactory.getInstance().createDtoFromJson(readFile(factoryResource.getFile(), StandardCharsets.UTF_8),
                                                                          Factory.class);
@@ -53,7 +64,31 @@ public class TestDevOpsFactoriesService {
         AuthConnection mockAuthConnection = prepareAuthConnection(fakeToken);
 
         fakeDevopsFactoriesService =
-                new DevopsFactoriesService(mockAuthConnection, mockFactoryConnection);
+                new DevopsFactoriesService(mockAuthConnection, mockFactoryConnection, mockWebhooksProvider);
+    }
+
+    @Test
+    public void testGetWebhook() throws Exception {
+        Webhook webhook = fakeDevopsFactoriesService.getWebhook(fakeWebhookId);
+        Assert.assertTrue(webhook != null);
+    }
+
+    @Test
+    public void testSaveWebhook() throws Exception {
+        Response response = fakeDevopsFactoriesService.saveWebhook(fakeWebhook);
+        Assert.assertTrue(response.getStatus() == OK.getStatusCode());
+    }
+
+    @Test
+    public void testUpdateWebhook() throws Exception {
+        Response response = fakeDevopsFactoriesService.updateWebhook(fakeWebhookId, fakeWebhook);
+        Assert.assertTrue(response.getStatus() == OK.getStatusCode());
+    }
+
+    @Test
+    public void testRemoveWebhook() throws Exception {
+        Response response = fakeDevopsFactoriesService.removeWebhook(fakeWebhookId);
+        Assert.assertTrue(response.getStatus() == OK.getStatusCode());
     }
 
     @Test
@@ -74,6 +109,12 @@ public class TestDevOpsFactoriesService {
         AuthConnection mockAuthConnection = mock(AuthConnection.class);
         when(mockAuthConnection.authenticateUser("somebody@somemail.com", "somepwd")).thenReturn(fakeToken);
         return mockAuthConnection;
+    }
+
+    protected WebhooksProvider prepareWebhookProvider(String fakeWebhookId, Webhook fakeWebhook) throws ApiException {
+        WebhooksProvider mockWebhooksProvider = mock(WebhooksProvider.class);
+        when(mockWebhooksProvider.getWebhook(fakeWebhookId)).thenReturn(fakeWebhook);
+        return mockWebhooksProvider;
     }
 
     protected FactoryConnection prepareFactoryConnection(Factory fakeFactory, Token fakeToken) throws ApiException {

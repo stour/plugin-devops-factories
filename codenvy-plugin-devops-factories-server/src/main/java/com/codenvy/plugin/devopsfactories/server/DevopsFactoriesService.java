@@ -12,9 +12,10 @@ package com.codenvy.plugin.devopsfactories.server;
 
 import com.codenvy.plugin.devopsfactories.server.connectors.Connector;
 import com.codenvy.plugin.devopsfactories.server.connectors.JenkinsConnector;
-import com.codenvy.plugin.devopsfactories.server.webhook.GithubWebhook;
+import com.codenvy.plugin.devopsfactories.server.preferences.WebhooksProvider;
 import com.codenvy.plugin.devopsfactories.shared.PullRequestEvent;
 import com.codenvy.plugin.devopsfactories.shared.PushEvent;
+import com.codenvy.plugin.devopsfactories.shared.Webhook;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
@@ -22,6 +23,8 @@ import com.wordnik.swagger.annotations.ApiResponse;
 import com.wordnik.swagger.annotations.ApiResponses;
 
 import org.eclipse.che.api.auth.shared.dto.Token;
+import org.eclipse.che.api.core.ApiException;
+import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
@@ -37,9 +40,13 @@ import javax.inject.Inject;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.Response;
@@ -50,8 +57,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -68,15 +73,51 @@ public class DevopsFactoriesService extends Service {
     private static final Logger LOG                             = LoggerFactory.getLogger(DevopsFactoriesService.class);
     private static final String CONNECTORS_PROPERTIES_FILENAME  = "connectors.properties";
     private static final String CREDENTIALS_PROPERTIES_FILENAME = "credentials.properties";
-    private static final String WEBHOOKS_PROPERTIES_FILENAME    = "webhooks.properties";
 
     private final AuthConnection authConnection;
     private final FactoryConnection factoryConnection;
+    private final WebhooksProvider webhooksProvider;
 
     @Inject
-    public DevopsFactoriesService(final AuthConnection authConnection, final FactoryConnection factoryConnection) {
+    public DevopsFactoriesService(final AuthConnection authConnection, final FactoryConnection factoryConnection,
+                                  final WebhooksProvider webhooksProvider) {
         this.authConnection = authConnection;
         this.factoryConnection = factoryConnection;
+        this.webhooksProvider = webhooksProvider;
+    }
+
+    @GET
+    @Path("/webhook/{wh-id}")
+    public Webhook getWebhook(@PathParam("wh-id") String webhookId) throws ApiException {
+        Webhook webhook = webhooksProvider.getWebhook(webhookId);
+        if (webhook == null) {
+            LOG.warn("Webhook with id {} is not found.", webhookId);
+            throw new NotFoundException("Webhook with id " + webhookId + " is not found.");
+        }
+        return webhook;
+    }
+
+    @POST
+    @Path("/webhook")
+    @Consumes(APPLICATION_JSON)
+    public Response saveWebhook(Webhook webhook) throws ApiException {
+        webhooksProvider.saveWebhook(webhook);
+        return Response.ok().build();
+    }
+
+    @PUT
+    @Path("/webhook/{wh-id}")
+    @Consumes(APPLICATION_JSON)
+    public Response updateWebhook(@PathParam("wh-id") String webhookId, Webhook webhook) throws ApiException {
+        webhooksProvider.updateWebhook(webhookId, webhook);
+        return Response.ok().build();
+    }
+
+    @DELETE
+    @Path("/webhook/{wh-id}")
+    public Response removeWebhook(@PathParam("wh-id") String webhookId) throws ApiException {
+        webhooksProvider.removeWebhook(webhookId);
+        return Response.ok().build();
     }
 
     @ApiOperation(value = "Notify a new contribution on a GitHub project",
@@ -95,9 +136,7 @@ public class DevopsFactoriesService extends Service {
                                   @PathParam("ws-id") String workspace,
                                   @ApiParam(value = "New contribution", required = true)
                                   @Context HttpServletRequest request)
-            throws ServerException {
-
-        LOG.info("githubWebhook");
+            throws ApiException {
 
         Response response;
         String githubHeader = request.getHeader("X-GitHub-Event");
@@ -129,7 +168,7 @@ public class DevopsFactoriesService extends Service {
         return response;
     }
 
-    protected Response handlePushEvent(PushEvent contribution) throws ServerException {
+    protected Response handlePushEvent(PushEvent contribution) throws ApiException {
         LOG.info("handlePushEvent");
         LOG.info("contribution.ref: " + contribution.getRef());
         LOG.info("contribution.repository.full_name: " + contribution.getRepository().getFull_name());
@@ -148,41 +187,50 @@ public class DevopsFactoriesService extends Service {
         final String contribBranch = contribRefSplit[contribRefSplit.length - 1];
         final String contribCommitId = contribution.getAfter();
 
-        final List<String> factoryIDs = getFactoryIDsFromWebhook(contribRepositoryHtmlUrl);
-        Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, contribBranch, token));
+        String webhookId = WebhooksProvider.constructWebhookId(contribRepositoryHtmlUrl);
+        Optional<Webhook> webhook = Optional.ofNullable(webhooksProvider.getWebhook(webhookId));
 
-        if (factory.isPresent()) {
-            Factory f = factory.get();
-            // Update factory with new commitId
-            Optional<Factory> updatedFactory = Optional.ofNullable(factoryConnection.updateFactory(f, null, null, contribCommitId, token));
+        if (webhook.isPresent()) {
+            final List<String> factoryIDs = webhook.get().getFactoryIDs();
+            Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, contribBranch, token));
 
-            if (updatedFactory.isPresent()) {
-                Factory uf = updatedFactory.get();
-                List<Link> factoryLinks = uf.getLinks();
-                Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
+            if (factory.isPresent()) {
+                Factory f = factory.get();
+                // Update factory with new commitId
+                Optional<Factory> updatedFactory = Optional.ofNullable(factoryConnection.updateFactory(f, null, null, contribCommitId, token));
 
-                if (factoryUrl.isPresent()) {
-                    String url = factoryUrl.get();
-                    // Display factory link within third-party services (using connectors configured for the factory)
-                    List<Connector> connectors = getConnectors(uf.getId());
-                    connectors.forEach(connector -> connector.addFactoryLink(url));
-                    response = Response.ok().build();
+                if (updatedFactory.isPresent()) {
+                    Factory uf = updatedFactory.get();
+                    List<Link> factoryLinks = uf.getLinks();
+                    Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
+
+                    if (factoryUrl.isPresent()) {
+                        String url = factoryUrl.get();
+                        // Display factory link within third-party services (using connectors configured for the factory)
+                        List<Connector> connectors = getConnectors(uf.getId());
+                        connectors.forEach(connector -> connector.addFactoryLink(url));
+                        response = Response.ok().build();
+                    } else {
+                        GenericEntity entity =
+                                new GenericEntity("Updated factory do not contain mandatory create-project link", String.class);
+                        response = Response.accepted(entity).build();
+                    }
                 } else {
-                    GenericEntity entity = new GenericEntity("Updated factory do not contain mandatory create-project link", String.class);
+                    GenericEntity entity = new GenericEntity("Factory not updated with commit " + contribCommitId, String.class);
                     response = Response.accepted(entity).build();
                 }
             } else {
-                GenericEntity entity = new GenericEntity("Factory not updated with commit " + contribCommitId, String.class);
+                GenericEntity entity = new GenericEntity("No factory found for branch " + contribBranch, String.class);
                 response = Response.accepted(entity).build();
             }
         } else {
-            GenericEntity entity = new GenericEntity("No factory found for branch " + contribBranch, String.class);
+            GenericEntity entity = new GenericEntity("No webhook found for repository " + contribRepositoryHtmlUrl, String.class);
             response = Response.accepted(entity).build();
         }
         return response;
     }
 
-    protected Response handlePullRequestEvent(PullRequestEvent prEvent) throws ServerException {
+    protected Response handlePullRequestEvent(PullRequestEvent prEvent) throws ApiException {
 
         LOG.info("handlePullRequestEvent");
         LOG.info("pull_request.head.repository.html_url: " + prEvent.getPull_request().getHead().getRepo().getHtml_url());
@@ -207,26 +255,32 @@ public class DevopsFactoriesService extends Service {
                 final String prBaseRepositoryHtmlUrl = prEvent.getPull_request().getBase().getRepo().getHtml_url();
                 final String prBaseBranch = prEvent.getPull_request().getBase().getRef();
 
-                final List<String> factoryIDs = getFactoryIDsFromWebhook(prBaseRepositoryHtmlUrl);
-                Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, prHeadBranch, token));
+                String webhookId = WebhooksProvider.constructWebhookId(prBaseRepositoryHtmlUrl);
+                Optional<Webhook> webhook = Optional.ofNullable(webhooksProvider.getWebhook(webhookId));
+                if (webhook.isPresent()) {
+                    final List<String> factoryIDs = webhook.get().getFactoryIDs();
+                    Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, prHeadBranch, token));
 
-                if (factory.isPresent()) {
-                    Factory f = factory.get();
-                    // Update factory with origin repository & branch name
-                    Optional<Factory> updatedFactory =
-                            Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prBaseBranch, prHeadCommitId, token));
-                    if (updatedFactory.isPresent()) {
-                        LOG.info("Factory successfully updated with branch " + prBaseBranch + " at commit " + prHeadCommitId);
-                        // TODO Remove factory from Github webhook
-                        response = Response.ok().build();
+                    if (factory.isPresent()) {
+                        Factory f = factory.get();
+                        // Update factory with origin repository & branch name
+                        Optional<Factory> updatedFactory =
+                                Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prBaseBranch, prHeadCommitId, token));
+                        if (updatedFactory.isPresent()) {
+                            LOG.info("Factory successfully updated with branch " + prBaseBranch + " at commit " + prHeadCommitId);
+                            // TODO Remove factory from Github webhook
+                            response = Response.ok().build();
+                        } else {
+                            GenericEntity entity = new GenericEntity(
+                                    "Factory not updated with branch " + prBaseBranch + " & commit " + prHeadCommitId, String.class);
+                            response = Response.accepted(entity).build();
+                        }
                     } else {
-                        GenericEntity entity =
-                                new GenericEntity("Factory not updated with branch " + prBaseBranch + " & commit " + prHeadCommitId,
-                                                  String.class);
+                        GenericEntity entity = new GenericEntity("No factory found for branch " + prHeadBranch, String.class);
                         response = Response.accepted(entity).build();
                     }
                 } else {
-                    GenericEntity entity = new GenericEntity("No factory found for branch " + prHeadBranch, String.class);
+                    GenericEntity entity = new GenericEntity("No webhook found for repository " + prBaseRepositoryHtmlUrl, String.class);
                     response = Response.accepted(entity).build();
                 }
             } else {
@@ -234,7 +288,8 @@ public class DevopsFactoriesService extends Service {
                 response = Response.accepted(entity).build();
             }
         } else {
-            GenericEntity entity = new GenericEntity("PullRequest Event action is " + action + ". We do not handle that.", String.class);
+            GenericEntity entity =
+                    new GenericEntity("PullRequest Event action is " + action + ". We do not handle that.", String.class);
             response = Response.accepted(entity).build();
         }
         return response;
@@ -257,48 +312,6 @@ public class DevopsFactoriesService extends Service {
             }
         }
         return factory;
-    }
-
-    protected List<String> getFactoryIDsFromWebhook(String repositoryUrl) throws ServerException {
-        List<String> factoryIDs = Collections.emptyList();
-        List<GithubWebhook> webhooks = getWebhooks();
-        for (GithubWebhook webhook : webhooks) {
-            // Search for a webhook configured for same repository as contribution data
-            String webhookRepositoryUrl = webhook.getRepositoryUrl();
-            if (repositoryUrl.equals(webhookRepositoryUrl)) {
-                factoryIDs = Arrays.asList(webhook.getFactoryIDs());
-            }
-        }
-        return factoryIDs;
-    }
-
-    /**
-     * Description of webhooks in properties file is:
-     * GitHub webhook: [webhook-name]=[webhook-type],[repository-url],[factory-id];[factory-id];...;[factory-id]
-     *
-     * @return the list of all webhooks contained in properties file {@link WEBHOOKS_PROPERTIES_FILENAME}
-     */
-    protected static List<GithubWebhook> getWebhooks() throws ServerException {
-        List<GithubWebhook> webhooks = new ArrayList<>();
-        Optional<Properties> webhooksProperties = Optional.ofNullable(getProperties(WEBHOOKS_PROPERTIES_FILENAME));
-        webhooksProperties.ifPresent(properties -> {
-            Set<String> keySet = properties.stringPropertyNames();
-            keySet.stream().forEach(key -> {
-                String value = properties.getProperty(key);
-                String[] valueSplit = value.split(",");
-                switch (valueSplit[0]) {
-                    case "github":
-                        String[] factoriesIDs = valueSplit[2].split(";");
-                        GithubWebhook githubWebhook = new GithubWebhook(valueSplit[1], factoriesIDs);
-                        webhooks.add(githubWebhook);
-                        LOG.debug("new GithubWebhook(" + valueSplit[1] + ", " + Arrays.toString(factoriesIDs) + ")");
-                        break;
-                    default:
-                        break;
-                }
-            });
-        });
-        return webhooks;
     }
 
     /**

@@ -11,6 +11,8 @@
 package com.codenvy.plugin.devopsfactories.server.inject;
 
 import com.codenvy.plugin.devopsfactories.server.DevopsFactoriesService;
+import com.codenvy.plugin.devopsfactories.server.preferences.CurrentUserPreferencesAccessorImpl;
+import com.codenvy.plugin.devopsfactories.server.preferences.PreferencesAccessor;
 import com.google.inject.AbstractModule;
 
 import org.eclipse.che.inject.DynaModule;
@@ -21,5 +23,6 @@ public class DevopsFactoriesModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DevopsFactoriesService.class);
+        bind(PreferencesAccessor.class).to(CurrentUserPreferencesAccessorImpl.class);
     }
 }
