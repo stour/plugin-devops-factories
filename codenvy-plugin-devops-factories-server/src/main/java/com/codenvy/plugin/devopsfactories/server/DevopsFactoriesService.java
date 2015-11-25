@@ -168,16 +168,15 @@ public class DevopsFactoriesService extends Service {
                     connectors.forEach(connector -> connector.addFactoryLink(url));
                     response = Response.ok().build();
                 } else {
-                    GenericEntity<String> entity =
-                            new GenericEntity<String>("Updated factory do not contain mandatory create-project link") {};
+                    GenericEntity entity = new GenericEntity("Updated factory do not contain mandatory create-project link", String.class);
                     response = Response.accepted(entity).build();
                 }
             } else {
-                GenericEntity<String> entity = new GenericEntity<String>("Factory not updated with commit " + contribCommitId) {};
+                GenericEntity entity = new GenericEntity("Factory not updated with commit " + contribCommitId, String.class);
                 response = Response.accepted(entity).build();
             }
         } else {
-            GenericEntity<String> entity = new GenericEntity<String>("No factory found for branch " + contribBranch) {};
+            GenericEntity entity = new GenericEntity("No factory found for branch " + contribBranch, String.class);
             response = Response.accepted(entity).build();
         }
         return response;
@@ -221,21 +220,21 @@ public class DevopsFactoriesService extends Service {
                         // TODO Remove factory from Github webhook
                         response = Response.ok().build();
                     } else {
-                        GenericEntity<String> entity = new GenericEntity<String>(
-                                "Factory not updated with branch " + prBaseBranch + " & commit " + prHeadCommitId) {};
+                        GenericEntity entity =
+                                new GenericEntity("Factory not updated with branch " + prBaseBranch + " & commit " + prHeadCommitId,
+                                                  String.class);
                         response = Response.accepted(entity).build();
                     }
                 } else {
-                    GenericEntity<String> entity = new GenericEntity<String>("No factory found for branch " + prHeadBranch) {};
+                    GenericEntity entity = new GenericEntity("No factory found for branch " + prHeadBranch, String.class);
                     response = Response.accepted(entity).build();
                 }
             } else {
-                GenericEntity<String> entity = new GenericEntity<String>("Pull Request was closed with unmerged commits !") {};
+                GenericEntity entity = new GenericEntity("Pull Request was closed with unmerged commits !", String.class);
                 response = Response.accepted(entity).build();
             }
         } else {
-            GenericEntity<String> entity =
-                    new GenericEntity<String>("PullRequest Event action is " + action + ". We do not handle that.") {};
+            GenericEntity entity = new GenericEntity("PullRequest Event action is " + action + ". We do not handle that.", String.class);
             response = Response.accepted(entity).build();
         }
         return response;
