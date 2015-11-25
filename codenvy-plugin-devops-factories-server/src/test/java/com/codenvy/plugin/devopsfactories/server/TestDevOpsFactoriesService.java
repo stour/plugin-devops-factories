@@ -11,10 +11,11 @@
 package com.codenvy.plugin.devopsfactories.server;
 
 import org.eclipse.che.api.auth.shared.dto.Token;
-import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.factory.dto.Factory;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -39,45 +40,44 @@ public class TestDevOpsFactoriesService {
 
     private final static String REQUEST_HEADER_GITHUB_EVENT = "X-GitHub-Event";
 
+    private DevopsFactoriesService fakeDevopsFactoriesService;
+
+    @Before
+    public void setUp() throws Exception {
+        URL factoryResource = getClass().getResource("/factory-MKTG-341.json");
+        Factory fakeFactory = DtoFactory.getInstance().createDtoFromJson(readFile(factoryResource.getFile(), StandardCharsets.UTF_8),
+                                                                         Factory.class);
+        Token fakeToken = DtoFactory.newDto(Token.class).withValue("fakeToken");
+        FactoryConnection mockFactoryConnection = prepareFactoryConnection(fakeFactory, fakeToken);
+
+        AuthConnection mockAuthConnection = prepareAuthConnection(fakeToken);
+
+        fakeDevopsFactoriesService =
+                new DevopsFactoriesService(mockAuthConnection, mockFactoryConnection);
+    }
+
     @Test
     public void testGithubWebhookPushEventNoConnector() throws Exception {
-        FactoryConnection mockFactoryConnection = prepareFactoryConnection();
-        AuthConnection mockAuthConnection = prepareAuthConnection();
-        DevopsFactoriesService devopsFactoriesService =
-                new DevopsFactoriesService(mockAuthConnection, mockFactoryConnection);
-
         HttpServletRequest mockRequest = prepareRequest("push");
-        Response response = devopsFactoriesService.githubWebhook("my-workspace", mockRequest);
+        Response response = fakeDevopsFactoriesService.githubWebhook("my-workspace", mockRequest);
         Assert.assertTrue(response.getStatus() == OK.getStatusCode());
     }
 
     @Test
     public void testGithubWebhookPullRequestEventNoConnector() throws Exception {
-        FactoryConnection mockFactoryConnection = prepareFactoryConnection();
-        AuthConnection mockAuthConnection = prepareAuthConnection();
-        DevopsFactoriesService devopsFactoriesService =
-                new DevopsFactoriesService(mockAuthConnection, mockFactoryConnection);
-
         HttpServletRequest mockRequest = prepareRequest("pull_request");
-        Response response = devopsFactoriesService.githubWebhook("my-workspace", mockRequest);
+        Response response = fakeDevopsFactoriesService.githubWebhook("my-workspace", mockRequest);
         Assert.assertTrue(response.getStatus() == OK.getStatusCode());
     }
 
-    protected AuthConnection prepareAuthConnection() throws ServerException {
+    protected AuthConnection prepareAuthConnection(Token fakeToken) throws ApiException {
         AuthConnection mockAuthConnection = mock(AuthConnection.class);
-        Token fakeToken = DtoFactory.newDto(Token.class).withValue("fakeToken");
         when(mockAuthConnection.authenticateUser("somebody@somemail.com", "somepwd")).thenReturn(fakeToken);
         return mockAuthConnection;
     }
 
-    protected FactoryConnection prepareFactoryConnection() throws Exception {
+    protected FactoryConnection prepareFactoryConnection(Factory fakeFactory, Token fakeToken) throws ApiException {
         FactoryConnection mockFactoryConnection = mock(FactoryConnection.class);
-        URL urlFactory = getClass().getResource("/factory-MKTG-341.json");
-        Factory fakeFactory =
-                org.eclipse.che.dto.server.DtoFactory.getInstance()
-                                                     .createDtoFromJson(readFile(urlFactory.getFile(), StandardCharsets.UTF_8),
-                                                                        Factory.class);
-        Token fakeToken = DtoFactory.newDto(Token.class).withValue("fakeToken");
         when(mockFactoryConnection.getFactory("fakeFactoryId", fakeToken)).thenReturn(fakeFactory);
         when(mockFactoryConnection.updateFactory(fakeFactory, null, null, "82d6fc75c8e59fe710fe0b6f04eeba153291c18b", fakeToken))
                 .thenReturn(fakeFactory);
