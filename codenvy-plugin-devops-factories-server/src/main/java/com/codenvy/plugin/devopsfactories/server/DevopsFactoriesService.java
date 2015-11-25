@@ -259,7 +259,7 @@ public class DevopsFactoriesService extends Service {
         return factory;
     }
 
-    protected List<String> getFactoryIDsFromWebhook(String repositoryUrl) {
+    protected List<String> getFactoryIDsFromWebhook(String repositoryUrl) throws ServerException {
         List<String> factoryIDs = Collections.emptyList();
         List<GithubWebhook> webhooks = getWebhooks();
         for (GithubWebhook webhook : webhooks) {
@@ -278,7 +278,7 @@ public class DevopsFactoriesService extends Service {
      *
      * @return the list of all webhooks contained in properties file {@link WEBHOOKS_PROPERTIES_FILENAME}
      */
-    protected static List<GithubWebhook> getWebhooks() {
+    protected static List<GithubWebhook> getWebhooks() throws ServerException {
         List<GithubWebhook> webhooks = new ArrayList<>();
         Optional<Properties> webhooksProperties = Optional.ofNullable(getProperties(WEBHOOKS_PROPERTIES_FILENAME));
         webhooksProperties.ifPresent(properties -> {
@@ -308,7 +308,7 @@ public class DevopsFactoriesService extends Service {
      * @param factoryId
      * @return the list of all connectors contained in properties file {@link CONNECTORS_PROPERTIES_FILENAME}
      */
-    protected static List<Connector> getConnectors(String factoryId) {
+    protected static List<Connector> getConnectors(String factoryId) throws ServerException {
         List<Connector> connectors = new ArrayList<>();
         Optional<Properties> connectorsProperties = Optional.ofNullable(getProperties(CONNECTORS_PROPERTIES_FILENAME));
         connectorsProperties.ifPresent(properties -> {
@@ -335,7 +335,7 @@ public class DevopsFactoriesService extends Service {
         return connectors;
     }
 
-    protected static Pair<String, String> getCredentials() {
+    protected static Pair<String, String> getCredentials() throws ServerException {
         String[] credentials = new String[2];
         Optional<Properties> credentialsProperties = Optional.ofNullable(getProperties(CREDENTIALS_PROPERTIES_FILENAME));
         if (credentialsProperties.isPresent()) {
@@ -357,14 +357,15 @@ public class DevopsFactoriesService extends Service {
         return Pair.of(credentials[0], credentials[1]);
     }
 
-    protected static Properties getProperties(String fileName) {
+    protected static Properties getProperties(String fileName) throws ServerException {
         java.nio.file.Path currentRelativePath = Paths.get("", fileName);
         String currentRelativePathString = currentRelativePath.toAbsolutePath().toString();
         Optional<URL> configPath = Optional.empty();
         try {
             configPath = Optional.ofNullable(new File(currentRelativePathString).toURI().toURL());
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            LOG.error(e.getLocalizedMessage());
+            throw new ServerException(e.getLocalizedMessage());
         }
         if (configPath.isPresent()) {
             Optional<InputStream> is = Optional.empty();
