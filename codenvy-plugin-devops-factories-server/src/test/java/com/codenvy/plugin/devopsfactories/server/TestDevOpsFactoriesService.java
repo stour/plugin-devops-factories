@@ -12,7 +12,7 @@ package com.codenvy.plugin.devopsfactories.server;
 
 import org.eclipse.che.api.auth.shared.dto.Token;
 import org.eclipse.che.api.core.ApiException;
-import org.eclipse.che.api.factory.dto.Factory;
+import org.eclipse.che.api.factory.shared.dto.Factory;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.junit.Assert;
 import org.junit.Before;
