@@ -26,7 +26,7 @@ import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.factory.shared.dto.Factory;
-import org.eclipse.che.api.project.shared.dto.ImportSourceDescriptor;
+import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.slf4j.Logger;
@@ -57,6 +57,8 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 
@@ -149,12 +151,12 @@ public class DevopsFactoriesService extends Service {
         final String contribCommitId = contribution.getAfter();
 
         final List<String> factoryIDs = getFactoryIDsFromWebhook(contribRepositoryHtmlUrl);
-        Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, contribBranch, token));
+        Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, contribRepositoryHtmlUrl, contribBranch, token));
 
         if (factory.isPresent()) {
             Factory f = factory.get();
             // Update factory with new commitId
-            Optional<Factory> updatedFactory = Optional.ofNullable(factoryConnection.updateFactory(f, null, null, contribCommitId, token));
+            Optional<Factory> updatedFactory = Optional.ofNullable(factoryConnection.updateFactory(f, contribRepositoryHtmlUrl, contribCommitId, token));
 
             if (updatedFactory.isPresent()) {
                 Factory uf = updatedFactory.get();
@@ -168,7 +170,7 @@ public class DevopsFactoriesService extends Service {
                     connectors.forEach(connector -> connector.addFactoryLink(url));
                     response = Response.ok().build();
                 } else {
-                    GenericEntity entity = new GenericEntity("Updated factory do not contain mandatory create-project link", String.class);
+                    GenericEntity entity = new GenericEntity("Updated factory do not contain mandatory create-workspace link", String.class);
                     response = Response.accepted(entity).build();
                 }
             } else {
@@ -208,13 +210,13 @@ public class DevopsFactoriesService extends Service {
                 final String prBaseBranch = prEvent.getPull_request().getBase().getRef();
 
                 final List<String> factoryIDs = getFactoryIDsFromWebhook(prBaseRepositoryHtmlUrl);
-                Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, prHeadBranch, token));
+                Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, prBaseRepositoryHtmlUrl, prHeadBranch, token));
 
                 if (factory.isPresent()) {
                     Factory f = factory.get();
                     // Update factory with origin repository & branch name
                     Optional<Factory> updatedFactory =
-                            Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prBaseBranch, prHeadCommitId, token));
+                            Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prHeadCommitId, token));
                     if (updatedFactory.isPresent()) {
                         LOG.info("Factory successfully updated with branch " + prBaseBranch + " at commit " + prHeadCommitId);
                         // TODO Remove factory from Github webhook
@@ -240,19 +242,29 @@ public class DevopsFactoriesService extends Service {
         return response;
     }
 
-    protected Factory getFactoryForBranch(List<String> factoryIDs, String branch, Token token) throws ServerException {
+    protected Factory getFactoryForBranch(List<String> factoryIDs, String repository, String branch, Token token) throws ServerException {
         Factory factory = null;
         for (String factoryId : factoryIDs) {
             Optional<Factory> obtainedFactory = Optional.ofNullable(factoryConnection.getFactory(factoryId, token));
             if (obtainedFactory.isPresent()) {
                 final Factory f = obtainedFactory.get();
-                ImportSourceDescriptor project = f.getSource().getProject();
-                Optional<String> factoryBranch = Optional.ofNullable(project.getParameters().get("branch"));
+                LOG.info("projectConfig.getSource().getLocation(): " + f.getWorkspace().getProjects().get(0).getSource().getLocation());
+                LOG.info("projectConfig.getSource().getParameters().get(\"branch\"): " + f.getWorkspace().getProjects().get(
+                        0).getSource().getParameters().get("branch"));
+                final List<ProjectConfigDto> projects = f.getWorkspace().getProjects()
+                                                         .stream()
+                                                         .filter(projectConfig ->
+                                                                         projectConfig.getSource() != null
+                                                                         && !isNullOrEmpty(projectConfig.getSource().getType())
+                                                                         && !isNullOrEmpty(projectConfig.getSource().getLocation())
+                                                                         && projectConfig.getSource().getLocation().equals(repository)
+                                                                         || projectConfig.getSource().getLocation().equals(repository + ".git")
+                                                                         && projectConfig.getSource().getParameters().get("branch").equals(
+                                                                                 branch))
+                                                         .collect(toList());
 
-                // Test if branch set for the factory corresponds to branch value in contribution event
-                if (factoryBranch.isPresent() && factoryBranch.get().equals(branch)) {
+                if (!projects.isEmpty()) {
                     factory = f;
-                    break;
                 }
             }
         }

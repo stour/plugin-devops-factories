@@ -11,7 +11,6 @@
 package com.codenvy.plugin.devopsfactories.server;
 
 import org.eclipse.che.api.auth.shared.dto.Token;
-import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.factory.shared.dto.Factory;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.junit.Assert;
@@ -44,14 +43,25 @@ public class TestDevOpsFactoriesService {
 
     @Before
     public void setUp() throws Exception {
+        // Prepare authConnection
+        Token fakeToken = DtoFactory.newDto(Token.class).withValue("fakeToken");
+        AuthConnection mockAuthConnection = mock(AuthConnection.class);
+        when(mockAuthConnection.authenticateUser("somebody@somemail.com", "somepwd")).thenReturn(fakeToken);
+
+        // Prepare factoryConnection
         URL factoryResource = getClass().getResource("/factory-MKTG-341.json");
         Factory fakeFactory = DtoFactory.getInstance().createDtoFromJson(readFile(factoryResource.getFile(), StandardCharsets.UTF_8),
                                                                          Factory.class);
-        Token fakeToken = DtoFactory.newDto(Token.class).withValue("fakeToken");
-        FactoryConnection mockFactoryConnection = prepareFactoryConnection(fakeFactory, fakeToken);
+        FactoryConnection mockFactoryConnection = mock(FactoryConnection.class);
+        when(mockFactoryConnection.getFactory("fakeFactoryId", fakeToken)).thenReturn(fakeFactory);
+        when(mockFactoryConnection.updateFactory(fakeFactory, "https://github.com/codenvy-demos/dashboard",
+                                                 "82d6fc75c8e59fe710fe0b6f04eeba153291c18b", fakeToken))
+                .thenReturn(fakeFactory);
+        when(mockFactoryConnection.updateFactory(fakeFactory, "https://github.com/codenvy-demos/dashboard",
+                                                 "d35d80c275514c226f4785a93ba34c46abb309e6", fakeToken))
+                .thenReturn(fakeFactory);
 
-        AuthConnection mockAuthConnection = prepareAuthConnection(fakeToken);
-
+        // Prepare DevopsFactoriesService
         fakeDevopsFactoriesService =
                 new DevopsFactoriesService(mockAuthConnection, mockFactoryConnection);
     }
@@ -68,24 +78,6 @@ public class TestDevOpsFactoriesService {
         HttpServletRequest mockRequest = prepareRequest("pull_request");
         Response response = fakeDevopsFactoriesService.githubWebhook("my-workspace", mockRequest);
         Assert.assertTrue(response.getStatus() == OK.getStatusCode());
-    }
-
-    protected AuthConnection prepareAuthConnection(Token fakeToken) throws ApiException {
-        AuthConnection mockAuthConnection = mock(AuthConnection.class);
-        when(mockAuthConnection.authenticateUser("somebody@somemail.com", "somepwd")).thenReturn(fakeToken);
-        return mockAuthConnection;
-    }
-
-    protected FactoryConnection prepareFactoryConnection(Factory fakeFactory, Token fakeToken) throws ApiException {
-        FactoryConnection mockFactoryConnection = mock(FactoryConnection.class);
-        when(mockFactoryConnection.getFactory("fakeFactoryId", fakeToken)).thenReturn(fakeFactory);
-        when(mockFactoryConnection.updateFactory(fakeFactory, null, null, "82d6fc75c8e59fe710fe0b6f04eeba153291c18b", fakeToken))
-                .thenReturn(fakeFactory);
-        when(mockFactoryConnection.updateFactory(fakeFactory, "https://github.com/codenvy-demos/dashboard",
-                                                 "master",
-                                                 "d35d80c275514c226f4785a93ba34c46abb309e6", fakeToken))
-                .thenReturn(fakeFactory);
-        return mockFactoryConnection;
     }
 
     protected HttpServletRequest prepareRequest(String eventType) throws Exception {

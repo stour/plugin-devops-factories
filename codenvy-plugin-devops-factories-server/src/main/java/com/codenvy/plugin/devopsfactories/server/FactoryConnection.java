@@ -10,10 +10,9 @@
  *******************************************************************************/
 package com.codenvy.plugin.devopsfactories.server;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import org.eclipse.che.api.auth.AuthenticationService;
-import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
 
 import org.eclipse.che.api.core.ForbiddenException;
@@ -25,9 +24,9 @@ import org.eclipse.che.api.core.rest.HttpJsonHelper;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.factory.server.FactoryService;
 import org.eclipse.che.api.factory.shared.dto.Factory;
-import org.eclipse.che.api.project.shared.dto.ImportSourceDescriptor;
-import org.eclipse.che.api.project.shared.dto.NewProject;
-import org.eclipse.che.api.project.shared.dto.Source;
+import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
+import org.eclipse.che.api.workspace.shared.dto.SourceStorageDto;
+import org.eclipse.che.api.workspace.shared.dto.WorkspaceConfigDto;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -52,6 +51,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static javax.ws.rs.core.UriBuilder.fromUri;
@@ -156,30 +157,57 @@ public class FactoryConnection {
         return null;
     }
 
-    public Factory updateFactory(Factory oldFactory, String repository, String branch, String commitId, Token userToken) throws ServerException {
+    public Factory updateFactory(Factory oldFactory, String repository, String commitId, Token userToken) throws ServerException {
+
+        if (repository == null) {
+            throw new ServerException("\'repository\' cannot be null. This parameter is mandatory to update factory " + oldFactory.getId() + ".");
+        }
+
+        if (commitId == null) {
+            throw new ServerException("\'commitId\' cannot be null. This parameter is mandatory to update factory " + oldFactory.getId() + ".");
+        }
+
+        WorkspaceConfigDto workspace = oldFactory.getWorkspace();
+        // Find project that matches factory data
+        final List<ProjectConfigDto> projects = workspace.getProjects()
+                                                 .stream()
+                                                 .filter(projectConfig ->
+                                                                 projectConfig.getSource() != null
+                                                                 && !isNullOrEmpty(projectConfig.getSource().getType())
+                                                                 && !isNullOrEmpty(projectConfig.getSource().getLocation())
+                                                                 && projectConfig.getSource().getLocation().equals(
+                                                                         repository))
+                                                 .collect(toList());
+
+        if (projects.size() == 0) {
+            throw new ServerException(
+                    "Factory " + oldFactory.getId() + " contains no project that matches source location " + repository + ".");
+        } else if (projects.size() > 1) {
+            throw new ServerException(
+                    "Factory " + oldFactory.getId() + " contains several projects that match source location " + repository + ".");
+        }
 
         // Get current factory data
-        final Source source = oldFactory.getSource();
-        final ImportSourceDescriptor sourceProject = source.getProject();
+        ProjectConfigDto project = projects.get(0);
+        final SourceStorageDto source = project.getSource();
+        Map<String, String> projectParams = source.getParameters();
 
         // Build new factory object with updated values
-        String location = sourceProject.getLocation();
-        if (repository != null) location = repository;
-
-        Map<String, String> projectParams = sourceProject.getParameters();
-        if (branch != null) projectParams.put("branch", branch);
-        if (commitId != null) projectParams.put("commitId", commitId);
-
-        ImportSourceDescriptor updatedSourceProject = sourceProject.withLocation(location).withParameters(projectParams);
-        Source updatedSource = source.withProject(updatedSourceProject);
-        Factory updatedFactory = oldFactory.withSource(updatedSource);
+        projectParams.put("commitId", commitId);
+        source.setParameters(projectParams);
+        project.setSource(source);
+        // Replace existing project with updated one
+        projects.removeIf(p -> p.getSource().getLocation().equals(repository));
+        projects.add(project);
+        workspace.setProjects(projects);
+        Factory updatedFactory = oldFactory.withWorkspace(workspace);
 
         // Update factory
         final String factoryId = updatedFactory.getId();
         String url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "updateFactory")
                                      .build(factoryId).toString();
 
-        Factory newFactory = null;
+        Factory newFactory;
         try {
             if (userToken != null) {
                 Pair tokenParam = Pair.of("token", userToken.getValue());
@@ -209,18 +237,16 @@ public class FactoryConnection {
         return newFactory;
     }
 
-    public Factory createNewFactory(String name, String sourceLocation, String branch, String commitId, Token userToken) throws ServerException {
+    public Factory createNewFactory(String name, String sourceLocation, String commitId, Token userToken) throws ServerException {
 
         // Build new factory object
-        Map<String, String> projectParams = Maps.newHashMap();
-        projectParams.put("branch", branch);
-        projectParams.put("commitId", commitId);
-        ImportSourceDescriptor sourceProject = DtoFactory.newDto(ImportSourceDescriptor.class).withType("git")
-                                                         .withLocation(sourceLocation).withParameters(projectParams);
-        Source source = DtoFactory.newDto(Source.class).withProject(sourceProject);
-        NewProject project = DtoFactory.newDto(NewProject.class).withName(name).withVisibility("public")
-                                       .withType("blank");
-        Factory postFactory = DtoFactory.newDto(Factory.class).withV("2.1").withSource(source).withProject(project);
+        Map<String, String> sourceParams = Maps.newHashMap();
+        sourceParams.put("commitId", commitId);
+        SourceStorageDto source =
+                DtoFactory.newDto(SourceStorageDto.class).withType("git").withLocation(sourceLocation).withParameters(sourceParams);
+        ProjectConfigDto project = DtoFactory.newDto(ProjectConfigDto.class).withName(name).withType("blank").withSource(source);
+        WorkspaceConfigDto workspace = DtoFactory.newDto(WorkspaceConfigDto.class).withProjects(Lists.newArrayList(project));
+        Factory factory = DtoFactory.newDto(Factory.class).withV("4.0").withWorkspace(workspace);
 
         // Create factory
         String url;
@@ -233,7 +259,7 @@ public class FactoryConnection {
 
         Factory newFactory = null;
 
-        String postFactoryString = DtoFactory.getInstance().toJson(postFactory);
+        String postFactoryString = DtoFactory.getInstance().toJson(factory);
         FormDataMultiPart formDataMultiPart = new FormDataMultiPart().field("factoryUrl", postFactoryString);
         Client client = ClientBuilder.newClient()
                                      .register(MultiPartWriter.class).register(MultiPartReaderClientSide.class);
@@ -253,7 +279,7 @@ public class FactoryConnection {
 
     public static Optional<String> getFactoryUrl(final List<Link> factoryLinks) {
         List<Link> createProjectLinks = factoryLinks.stream()
-                                                    .filter(link -> "create-project".equals(link.getRel())).collect(Collectors.toList());
+                                                    .filter(link -> "create-workspace".equals(link.getRel())).collect(Collectors.toList());
         if (!createProjectLinks.isEmpty()) {
             return Optional.of(createProjectLinks.get(0).getHref());
         } else {
