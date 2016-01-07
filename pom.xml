@@ -18,10 +18,10 @@
         <groupId>com.codenvy.plugin</groupId>
         <version>3.13.2-SNAPSHOT</version>
     </parent>
-    <artifactId>codenvy-plugin-devops-factories-parent</artifactId>
+    <artifactId>codenvy-plugin-version-control-monitor-parent</artifactId>
     <packaging>pom</packaging>
-    <name>Codenvy Plugin :: DevOps Factories :: Parent</name>
+    <name>Codenvy Plugin :: Version Control Monitor :: Parent</name>
     <modules>
-        <module>codenvy-plugin-devops-factories-server</module>
+        <module>codenvy-plugin-version-control-monitor-server</module>
     </modules>
 </project>
