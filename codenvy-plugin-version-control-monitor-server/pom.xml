@@ -16,7 +16,7 @@
     <parent>
         <artifactId>codenvy-plugin-version-control-monitor-parent</artifactId>
         <groupId>com.codenvy.plugin</groupId>
-        <version>4.0.0-beta-7-SNAPSHOT</version>
+        <version>4.0.0-beta-8-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>codenvy-plugin-version-control-monitor-server</artifactId>
