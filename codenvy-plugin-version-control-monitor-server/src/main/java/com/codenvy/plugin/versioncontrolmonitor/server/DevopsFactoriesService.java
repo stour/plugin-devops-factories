@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012-2015 Codenvy, S.A.
+ * Copyright (c) 2012-2016 Codenvy, S.A.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,11 +15,11 @@ import com.codenvy.plugin.versioncontrolmonitor.server.connectors.JenkinsConnect
 import com.codenvy.plugin.versioncontrolmonitor.server.webhook.GithubWebhook;
 import com.codenvy.plugin.versioncontrolmonitor.shared.PullRequestEvent;
 import com.codenvy.plugin.versioncontrolmonitor.shared.PushEvent;
-import com.wordnik.swagger.annotations.Api;
-import com.wordnik.swagger.annotations.ApiOperation;
-import com.wordnik.swagger.annotations.ApiParam;
-import com.wordnik.swagger.annotations.ApiResponse;
-import com.wordnik.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 import org.eclipse.che.api.auth.shared.dto.Token;
 import org.eclipse.che.api.core.ServerException;
