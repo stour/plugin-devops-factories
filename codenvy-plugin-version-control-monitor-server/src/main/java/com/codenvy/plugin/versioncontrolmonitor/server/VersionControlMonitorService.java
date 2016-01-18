@@ -149,14 +149,21 @@ public class VersionControlMonitorService extends Service {
         final String contribBranch = contribRefSplit[contribRefSplit.length - 1];
         final String contribCommitId = contribution.getAfter();
 
-        // Get factory id's configured in the webhook for given repository
-        final List<String> factoryIDs = getFactoryIDsFromWebhook(contribRepositoryHtmlUrl);
+        // Get webhook configured for given repository
+        Optional<GithubWebhook> webhook = Optional.ofNullable(getWebhook(contribRepositoryHtmlUrl));
+        if (!webhook.isPresent()) {
+            return Response.accepted(new GenericEntity<>("No webhook configured for repository " + contribRepositoryHtmlUrl, String.class))
+                           .build();
+        }
+        GithubWebhook w = webhook.get();
+
+        // Get factory id's listed into the webhook
+        final List<String> factoryIDs = Arrays.asList(w.getFactoryIDs());
 
         // Get factory configured for given branch
         Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, contribRepositoryHtmlUrl, contribBranch, token));
-
         if (!factory.isPresent()) {
-            return Response.accepted(new GenericEntity("No factory found for branch " + contribBranch, String.class)).build();
+            return Response.accepted(new GenericEntity<>("No factory found for branch " + contribBranch, String.class)).build();
         }
 
         // Update factory with new commitId
@@ -165,16 +172,15 @@ public class VersionControlMonitorService extends Service {
                 Optional.ofNullable(factoryConnection.updateFactory(f, contribRepositoryHtmlUrl, contribCommitId, token));
 
         if (!updatedFactory.isPresent()) {
-            return Response.accepted(new GenericEntity("Factory not updated with commit " + contribCommitId, String.class)).build();
+            return Response.accepted(new GenericEntity<>("Factory not updated with commit " + contribCommitId, String.class)).build();
         }
 
         // Get URL to open factory
         Factory uf = updatedFactory.get();
         List<Link> factoryLinks = uf.getLinks();
         Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
-
         if (!factoryUrl.isPresent()) {
-            return Response.accepted(new GenericEntity("Updated factory do not contain mandatory \'create-workspace\' link", String.class))
+            return Response.accepted(new GenericEntity<>("Updated factory do not contain mandatory \'create-workspace\' link", String.class))
                            .build();
         }
         String url = factoryUrl.get();
@@ -203,7 +209,7 @@ public class VersionControlMonitorService extends Service {
         String action = prEvent.getAction();
         if (!"closed".equals(action)) {
             return Response
-                    .accepted(new GenericEntity(
+                    .accepted(new GenericEntity<>(
                             "PullRequest Event action is " + action + ". " + this.getClass().getSimpleName() + " do not handle this one.",
                             String.class))
                     .build();
@@ -211,7 +217,7 @@ public class VersionControlMonitorService extends Service {
 
         boolean isMerged = prEvent.getPull_request().getMerged();
         if (!isMerged) {
-            return Response.accepted(new GenericEntity("Pull Request was closed with unmerged commits !", String.class)).build();
+            return Response.accepted(new GenericEntity<>("Pull Request was closed with unmerged commits !", String.class)).build();
         }
 
         // Get head repository data
@@ -223,13 +229,21 @@ public class VersionControlMonitorService extends Service {
         final String prBaseBranch = prEvent.getPull_request().getBase().getRef();
 
         // Get factory id's configured in the webhook for given repository
-        final List<String> factoryIDs = getFactoryIDsFromWebhook(prBaseRepositoryHtmlUrl);
+        Optional<GithubWebhook> webhook = Optional.ofNullable(getWebhook(prBaseRepositoryHtmlUrl));
+        if (!webhook.isPresent()) {
+            return Response.accepted(new GenericEntity<>("No webhook configured for repository " + prBaseRepositoryHtmlUrl, String.class))
+                           .build();
+        }
+        GithubWebhook w = webhook.get();
+
+        // Get factory id's listed into the webhook
+        final List<String> factoryIDs = Arrays.asList(w.getFactoryIDs());
 
         // Get factory configured for given branch
         Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, prBaseRepositoryHtmlUrl, prHeadBranch, token));
 
         if (!factory.isPresent()) {
-            return Response.accepted(new GenericEntity("No factory found for branch " + prHeadBranch, String.class)).build();
+            return Response.accepted(new GenericEntity<>("No factory found for branch " + prHeadBranch, String.class)).build();
         }
 
         // Update factory with origin repository & branch name
@@ -238,7 +252,7 @@ public class VersionControlMonitorService extends Service {
                 Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prHeadCommitId, token));
         if (!updatedFactory.isPresent()) {
             return Response.accepted(
-                    new GenericEntity("Factory not updated with branch " + prBaseBranch + " & commit " + prHeadCommitId,
+                    new GenericEntity<>("Factory not updated with branch " + prBaseBranch + " & commit " + prHeadCommitId,
                                       String.class)).build();
         }
         LOG.info("Factory successfully updated with branch " + prBaseBranch + " at commit " + prHeadCommitId);
@@ -275,17 +289,16 @@ public class VersionControlMonitorService extends Service {
         return factory;
     }
 
-    protected List<String> getFactoryIDsFromWebhook(String repositoryUrl) throws ServerException {
-        List<String> factoryIDs = Collections.emptyList();
+    protected GithubWebhook getWebhook(String repositoryUrl) throws ServerException {
         List<GithubWebhook> webhooks = getWebhooks();
-        for (GithubWebhook webhook : webhooks) {
-            // Search for a webhook configured for same repository as contribution data
-            String webhookRepositoryUrl = webhook.getRepositoryUrl();
+        GithubWebhook webhook = null;
+        for (GithubWebhook w : webhooks) {
+            String webhookRepositoryUrl = w.getRepositoryUrl();
             if (repositoryUrl.equals(webhookRepositoryUrl)) {
-                factoryIDs = Arrays.asList(webhook.getFactoryIDs());
+                webhook = w;
             }
         }
-        return factoryIDs;
+        return webhook;
     }
 
     /**
