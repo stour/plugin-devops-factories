@@ -65,18 +65,18 @@ import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 @Api(value = "/vcmonitor",
      description = "Version Control Monitor")
 @Path("/vcmonitor/{ws-id}")
-public class DevopsFactoriesService extends Service {
+public class VersionControlMonitorService extends Service {
 
-    private static final Logger LOG                             = LoggerFactory.getLogger(DevopsFactoriesService.class);
+    private static final Logger LOG                             = LoggerFactory.getLogger(VersionControlMonitorService.class);
     private static final String CONNECTORS_PROPERTIES_FILENAME  = "connectors.properties";
     private static final String CREDENTIALS_PROPERTIES_FILENAME = "credentials.properties";
     private static final String WEBHOOKS_PROPERTIES_FILENAME    = "webhooks.properties";
 
-    private final AuthConnection authConnection;
+    private final AuthConnection    authConnection;
     private final FactoryConnection factoryConnection;
 
     @Inject
-    public DevopsFactoriesService(final AuthConnection authConnection, final FactoryConnection factoryConnection) {
+    public VersionControlMonitorService(final AuthConnection authConnection, final FactoryConnection factoryConnection) {
         this.authConnection = authConnection;
         this.factoryConnection = factoryConnection;
     }

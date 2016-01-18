@@ -10,16 +10,16 @@
  *******************************************************************************/
 package com.codenvy.plugin.versioncontrolmonitor.server.inject;
 
-import com.codenvy.plugin.versioncontrolmonitor.server.DevopsFactoriesService;
+import com.codenvy.plugin.versioncontrolmonitor.server.VersionControlMonitorService;
 import com.google.inject.AbstractModule;
 
 import org.eclipse.che.inject.DynaModule;
 
 @DynaModule
-public class DevopsFactoriesModule extends AbstractModule {
+public class VersionControlMonitorModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(DevopsFactoriesService.class);
+        bind(VersionControlMonitorService.class);
     }
 }

@@ -35,11 +35,11 @@ import static org.mockito.Mockito.when;
 import static javax.ws.rs.core.Response.Status.OK;
 
 @RunWith(MockitoJUnitRunner.class)
-public class TestDevOpsFactoriesService {
+public class TestVersionControlMonitorService {
 
     private final static String REQUEST_HEADER_GITHUB_EVENT = "X-GitHub-Event";
 
-    private DevopsFactoriesService fakeDevopsFactoriesService;
+    private VersionControlMonitorService fakeVersionControlMonitorService;
 
     @Before
     public void setUp() throws Exception {
@@ -61,22 +61,22 @@ public class TestDevOpsFactoriesService {
                                                  "d35d80c275514c226f4785a93ba34c46abb309e6", fakeToken))
                 .thenReturn(fakeFactory);
 
-        // Prepare DevopsFactoriesService
-        fakeDevopsFactoriesService =
-                new DevopsFactoriesService(mockAuthConnection, mockFactoryConnection);
+        // Prepare VersionControlMonitorService
+        fakeVersionControlMonitorService =
+                new VersionControlMonitorService(mockAuthConnection, mockFactoryConnection);
     }
 
     @Test
     public void testGithubWebhookPushEventNoConnector() throws Exception {
         HttpServletRequest mockRequest = prepareRequest("push");
-        Response response = fakeDevopsFactoriesService.githubWebhook("my-workspace", mockRequest);
+        Response response = fakeVersionControlMonitorService.githubWebhook("my-workspace", mockRequest);
         Assert.assertTrue(response.getStatus() == OK.getStatusCode());
     }
 
     @Test
     public void testGithubWebhookPullRequestEventNoConnector() throws Exception {
         HttpServletRequest mockRequest = prepareRequest("pull_request");
-        Response response = fakeDevopsFactoriesService.githubWebhook("my-workspace", mockRequest);
+        Response response = fakeVersionControlMonitorService.githubWebhook("my-workspace", mockRequest);
         Assert.assertTrue(response.getStatus() == OK.getStatusCode());
     }
 
