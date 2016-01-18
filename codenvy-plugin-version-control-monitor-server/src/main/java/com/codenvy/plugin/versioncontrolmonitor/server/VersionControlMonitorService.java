@@ -139,10 +139,9 @@ public class VersionControlMonitorService extends Service {
         LOG.info("contribution.repository.html_url: " + contribution.getRepository().getHtml_url());
         LOG.info("contribution.after: " + contribution.getAfter());
 
-        Response response;
-
-        Pair<String,String> credentials = getCredentials();
-        Token token = authConnection.authenticateUser(credentials.first,  credentials.second);
+        // Authenticate on Codenvy
+        Pair<String, String> credentials = getCredentials();
+        Token token = authConnection.authenticateUser(credentials.first, credentials.second);
 
         // Get contribution data
         final String contribRepositoryHtmlUrl = contribution.getRepository().getHtml_url();
@@ -150,42 +149,46 @@ public class VersionControlMonitorService extends Service {
         final String contribBranch = contribRefSplit[contribRefSplit.length - 1];
         final String contribCommitId = contribution.getAfter();
 
+        // Get factory id's configured in the webhook for given repository
         final List<String> factoryIDs = getFactoryIDsFromWebhook(contribRepositoryHtmlUrl);
+
+        // Get factory configured for given branch
         Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, contribRepositoryHtmlUrl, contribBranch, token));
 
-        if (factory.isPresent()) {
-            Factory f = factory.get();
-            // Update factory with new commitId
-            Optional<Factory> updatedFactory = Optional.ofNullable(factoryConnection.updateFactory(f, contribRepositoryHtmlUrl, contribCommitId, token));
-
-            if (updatedFactory.isPresent()) {
-                Factory uf = updatedFactory.get();
-                List<Link> factoryLinks = uf.getLinks();
-                Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
-
-                if (factoryUrl.isPresent()) {
-                    String url = factoryUrl.get();
-                    // Display factory link within third-party services (using connectors configured for the factory)
-                    List<Connector> connectors = getConnectors(uf.getId());
-                    connectors.forEach(connector -> connector.addFactoryLink(url));
-                    response = Response.ok().build();
-                } else {
-                    GenericEntity entity = new GenericEntity("Updated factory do not contain mandatory create-workspace link", String.class);
-                    response = Response.accepted(entity).build();
-                }
-            } else {
-                GenericEntity entity = new GenericEntity("Factory not updated with commit " + contribCommitId, String.class);
-                response = Response.accepted(entity).build();
-            }
-        } else {
-            GenericEntity entity = new GenericEntity("No factory found for branch " + contribBranch, String.class);
-            response = Response.accepted(entity).build();
+        if (!factory.isPresent()) {
+            return Response.accepted(new GenericEntity("No factory found for branch " + contribBranch, String.class)).build();
         }
-        return response;
+
+        // Update factory with new commitId
+        Factory f = factory.get();
+        Optional<Factory> updatedFactory =
+                Optional.ofNullable(factoryConnection.updateFactory(f, contribRepositoryHtmlUrl, contribCommitId, token));
+
+        if (!updatedFactory.isPresent()) {
+            return Response.accepted(new GenericEntity("Factory not updated with commit " + contribCommitId, String.class)).build();
+        }
+
+        // Get URL to open factory
+        Factory uf = updatedFactory.get();
+        List<Link> factoryLinks = uf.getLinks();
+        Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
+
+        if (!factoryUrl.isPresent()) {
+            return Response.accepted(new GenericEntity("Updated factory do not contain mandatory \'create-workspace\' link", String.class))
+                           .build();
+        }
+        String url = factoryUrl.get();
+
+        // Get connectors configured for the factory
+        List<Connector> connectors = getConnectors(uf.getId());
+
+        // Display factory link within third-party services
+        connectors.forEach(connector -> connector.addFactoryLink(url));
+        return Response.ok().build();
+
     }
 
     protected Response handlePullRequestEvent(PullRequestEvent prEvent) throws ServerException {
-
         LOG.info("handlePullRequestEvent");
         LOG.info("pull_request.head.repository.html_url: " + prEvent.getPull_request().getHead().getRepo().getHtml_url());
         LOG.info("pull_request.head.ref: " + prEvent.getPull_request().getHead().getRef());
@@ -193,53 +196,54 @@ public class VersionControlMonitorService extends Service {
         LOG.info("pull_request.base.repository.html_url: " + prEvent.getPull_request().getBase().getRepo().getHtml_url());
         LOG.info("pull_request.base.ref: " + prEvent.getPull_request().getBase().getRef());
 
-        Response response;
-
-        Pair<String,String> credentials = getCredentials();
-        Token token = authConnection.authenticateUser(credentials.first,  credentials.second);
+        // Authenticate on Codenvy
+        Pair<String, String> credentials = getCredentials();
+        Token token = authConnection.authenticateUser(credentials.first, credentials.second);
 
         String action = prEvent.getAction();
-        if ("closed".equals(action)) {
-            boolean isMerged = prEvent.getPull_request().getMerged();
-            if (isMerged) {
-                final String prHeadBranch = prEvent.getPull_request().getHead().getRef();
-                final String prHeadCommitId = prEvent.getPull_request().getHead().getSha();
-
-                // Get base repository & branch (values after merge)
-                final String prBaseRepositoryHtmlUrl = prEvent.getPull_request().getBase().getRepo().getHtml_url();
-                final String prBaseBranch = prEvent.getPull_request().getBase().getRef();
-
-                final List<String> factoryIDs = getFactoryIDsFromWebhook(prBaseRepositoryHtmlUrl);
-                Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, prBaseRepositoryHtmlUrl, prHeadBranch, token));
-
-                if (factory.isPresent()) {
-                    Factory f = factory.get();
-                    // Update factory with origin repository & branch name
-                    Optional<Factory> updatedFactory =
-                            Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prHeadCommitId, token));
-                    if (updatedFactory.isPresent()) {
-                        LOG.info("Factory successfully updated with branch " + prBaseBranch + " at commit " + prHeadCommitId);
-                        // TODO Remove factory from Github webhook
-                        response = Response.ok().build();
-                    } else {
-                        GenericEntity entity =
-                                new GenericEntity("Factory not updated with branch " + prBaseBranch + " & commit " + prHeadCommitId,
-                                                  String.class);
-                        response = Response.accepted(entity).build();
-                    }
-                } else {
-                    GenericEntity entity = new GenericEntity("No factory found for branch " + prHeadBranch, String.class);
-                    response = Response.accepted(entity).build();
-                }
-            } else {
-                GenericEntity entity = new GenericEntity("Pull Request was closed with unmerged commits !", String.class);
-                response = Response.accepted(entity).build();
-            }
-        } else {
-            GenericEntity entity = new GenericEntity("PullRequest Event action is " + action + ". We do not handle that.", String.class);
-            response = Response.accepted(entity).build();
+        if (!"closed".equals(action)) {
+            return Response
+                    .accepted(new GenericEntity(
+                            "PullRequest Event action is " + action + ". " + this.getClass().getSimpleName() + " do not handle this one.",
+                            String.class))
+                    .build();
         }
-        return response;
+
+        boolean isMerged = prEvent.getPull_request().getMerged();
+        if (!isMerged) {
+            return Response.accepted(new GenericEntity("Pull Request was closed with unmerged commits !", String.class)).build();
+        }
+
+        // Get head repository data
+        final String prHeadBranch = prEvent.getPull_request().getHead().getRef();
+        final String prHeadCommitId = prEvent.getPull_request().getHead().getSha();
+
+        // Get base repository data (values after merge)
+        final String prBaseRepositoryHtmlUrl = prEvent.getPull_request().getBase().getRepo().getHtml_url();
+        final String prBaseBranch = prEvent.getPull_request().getBase().getRef();
+
+        // Get factory id's configured in the webhook for given repository
+        final List<String> factoryIDs = getFactoryIDsFromWebhook(prBaseRepositoryHtmlUrl);
+
+        // Get factory configured for given branch
+        Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, prBaseRepositoryHtmlUrl, prHeadBranch, token));
+
+        if (!factory.isPresent()) {
+            return Response.accepted(new GenericEntity("No factory found for branch " + prHeadBranch, String.class)).build();
+        }
+
+        // Update factory with origin repository & branch name
+        Factory f = factory.get();
+        Optional<Factory> updatedFactory =
+                Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prHeadCommitId, token));
+        if (!updatedFactory.isPresent()) {
+            return Response.accepted(
+                    new GenericEntity("Factory not updated with branch " + prBaseBranch + " & commit " + prHeadCommitId,
+                                      String.class)).build();
+        }
+        LOG.info("Factory successfully updated with branch " + prBaseBranch + " at commit " + prHeadCommitId);
+        // TODO Remove factory from Github webhook
+        return Response.ok().build();
     }
 
     protected Factory getFactoryForBranch(List<String> factoryIDs, String repository, String branch, Token token) throws ServerException {
