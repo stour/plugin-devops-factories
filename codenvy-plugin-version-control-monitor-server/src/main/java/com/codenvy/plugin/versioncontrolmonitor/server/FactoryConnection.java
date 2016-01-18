@@ -73,7 +73,7 @@ public class FactoryConnection {
                                      .build(factoryId).toString();
         LOG.debug("getFactory: " + url);
 
-        Factory factory = null;
+        Factory factory;
         try {
             if (userToken != null) {
                 Pair tokenParam = Pair.of("token", userToken.getValue());
@@ -159,12 +159,10 @@ public class FactoryConnection {
 
     public Factory updateFactory(Factory oldFactory, String repository, String commitId, Token userToken) throws ServerException {
 
-        if (repository == null) {
-            throw new ServerException("\'repository\' cannot be null. This parameter is mandatory to update factory " + oldFactory.getId() + ".");
-        }
-
-        if (commitId == null) {
-            throw new ServerException("\'commitId\' cannot be null. This parameter is mandatory to update factory " + oldFactory.getId() + ".");
+        if (isNullOrEmpty(repository) || isNullOrEmpty(featureBranch) || isNullOrEmpty(commitId)) {
+            throw new ServerException(
+                    "\'repository\', \'branch\' and \'commitId\' cannot be null. They are mandatory to update factory " +
+                    oldFactory.getId() + ".");
         }
 
         WorkspaceConfigDto workspace = oldFactory.getWorkspace();

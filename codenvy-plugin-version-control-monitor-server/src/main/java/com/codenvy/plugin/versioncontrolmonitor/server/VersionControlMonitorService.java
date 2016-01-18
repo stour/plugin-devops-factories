@@ -51,7 +51,6 @@ import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -160,10 +159,13 @@ public class VersionControlMonitorService extends Service {
         // Get factory id's listed into the webhook
         final List<String> factoryIDs = Arrays.asList(w.getFactoryIDs());
 
-        // Get factory configured for given branch
-        Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, contribRepositoryHtmlUrl, contribBranch, token));
+        // Get id of factory that contains a project for given repository and branch
+        Optional<Factory> factory = Optional.ofNullable(getFactoryForRepositoryAndBranch(factoryIDs, contribRepositoryHtmlUrl,
+                                                                                         contribBranch, token));
         if (!factory.isPresent()) {
-            return Response.accepted(new GenericEntity<>("No factory found for branch " + contribBranch, String.class)).build();
+            return Response.accepted(
+                    new GenericEntity<>("No factory found for repository " + contribRepositoryHtmlUrl + " and branch " + contribBranch,
+                                        String.class)).build();
         }
 
         // Update factory with new commitId
@@ -206,6 +208,7 @@ public class VersionControlMonitorService extends Service {
         Pair<String, String> credentials = getCredentials();
         Token token = authConnection.authenticateUser(credentials.first, credentials.second);
 
+        // Check that event indicates a successful merging
         String action = prEvent.getAction();
         if (!"closed".equals(action)) {
             return Response
@@ -228,7 +231,7 @@ public class VersionControlMonitorService extends Service {
         final String prBaseRepositoryHtmlUrl = prEvent.getPull_request().getBase().getRepo().getHtml_url();
         final String prBaseBranch = prEvent.getPull_request().getBase().getRef();
 
-        // Get factory id's configured in the webhook for given repository
+        // Get webhook configured for given repository
         Optional<GithubWebhook> webhook = Optional.ofNullable(getWebhook(prBaseRepositoryHtmlUrl));
         if (!webhook.isPresent()) {
             return Response.accepted(new GenericEntity<>("No webhook configured for repository " + prBaseRepositoryHtmlUrl, String.class))
@@ -239,9 +242,9 @@ public class VersionControlMonitorService extends Service {
         // Get factory id's listed into the webhook
         final List<String> factoryIDs = Arrays.asList(w.getFactoryIDs());
 
-        // Get factory configured for given branch
-        Optional<Factory> factory = Optional.ofNullable(getFactoryForBranch(factoryIDs, prBaseRepositoryHtmlUrl, prHeadBranch, token));
-
+        // Get id of factory that contains a project for given repository and branch
+        Optional<Factory> factory = Optional.ofNullable(getFactoryForRepositoryAndBranch(factoryIDs, prBaseRepositoryHtmlUrl, prHeadBranch,
+                                                                                         token));
         if (!factory.isPresent()) {
             return Response.accepted(new GenericEntity<>("No factory found for branch " + prHeadBranch, String.class)).build();
         }
@@ -260,29 +263,29 @@ public class VersionControlMonitorService extends Service {
         return Response.ok().build();
     }
 
-    protected Factory getFactoryForBranch(List<String> factoryIDs, String repository, String branch, Token token) throws ServerException {
+    protected Factory getFactoryForRepositoryAndBranch(List<String> factoryIDs, String repository, String branch, Token token)
+            throws ServerException {
         Factory factory = null;
         for (String factoryId : factoryIDs) {
             Optional<Factory> obtainedFactory = Optional.ofNullable(factoryConnection.getFactory(factoryId, token));
             if (obtainedFactory.isPresent()) {
                 final Factory f = obtainedFactory.get();
-                LOG.info("projectConfig.getSource().getLocation(): " + f.getWorkspace().getProjects().get(0).getSource().getLocation());
-                LOG.info("projectConfig.getSource().getParameters().get(\"branch\"): " + f.getWorkspace().getProjects().get(
-                        0).getSource().getParameters().get("branch"));
                 final List<ProjectConfigDto> projects = f.getWorkspace().getProjects()
                                                          .stream()
-                                                         .filter(projectConfig ->
-                                                                         projectConfig.getSource() != null
-                                                                         && !isNullOrEmpty(projectConfig.getSource().getType())
-                                                                         && !isNullOrEmpty(projectConfig.getSource().getLocation())
-                                                                         && projectConfig.getSource().getLocation().equals(repository)
-                                                                         || projectConfig.getSource().getLocation().equals(repository + ".git")
-                                                                         && projectConfig.getSource().getParameters().get("branch").equals(
-                                                                                 branch))
+                                                         .filter(p ->
+                                                                         p.getSource() != null
+                                                                         && !isNullOrEmpty(p.getSource().getType())
+                                                                         && !isNullOrEmpty(p.getSource().getLocation())
+                                                                         && repository.equals(p.getSource().getLocation())
+                                                                         || (repository + ".git").equals(p.getSource().getLocation())
+                                                                            && "master".equals(branch)
+                                                                         || !isNullOrEmpty(p.getSource().getParameters().get("branch"))
+                                                                            && branch.equals(p.getSource().getParameters().get("branch")))
                                                          .collect(toList());
 
                 if (!projects.isEmpty()) {
                     factory = f;
+                    break;
                 }
             }
         }
