@@ -158,6 +158,22 @@ public class FactoryConnection {
         return null;
     }
 
+    /**
+     * @param oldFactory
+     *         the factory to update
+     * @param headRepository
+     *         the repository that is value of source location for the matching project in oldFactory
+     * @param headBranch
+     *         the branch that is value of source parameter 'branch' for the matching project in oldFactory
+     * @param baseRepository
+     *         the new repository to set as value of source location in the maching project in oldFactory
+     * @param headCommitId
+     *         the commit id to set as value of source parameter 'commitId' in the maching project in oldFactory
+     * @param userToken
+     *         the authentication token to use in order to call the Codenvy API
+     * @return the updated factory or null if an error occurs during the 'updateFactory' API call
+     * @throws ServerException
+     */
     public Factory updateFactory(Factory oldFactory, String headRepository, String headBranch, String baseRepository, String headCommitId,
                                  Token userToken) throws ServerException {
 
