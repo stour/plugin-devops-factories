@@ -168,18 +168,9 @@ public class VersionControlMonitorService extends Service {
                                         String.class)).build();
         }
 
-        // Update factory with new commitId
+        // Get 'open factory' URL
         Factory f = factory.get();
-        Optional<Factory> updatedFactory =
-                Optional.ofNullable(factoryConnection.updateFactory(f, contribRepositoryHtmlUrl, contribCommitId, token));
-
-        if (!updatedFactory.isPresent()) {
-            return Response.accepted(new GenericEntity<>("Factory not updated with commit " + contribCommitId, String.class)).build();
-        }
-
-        // Get URL to open factory
-        Factory uf = updatedFactory.get();
-        List<Link> factoryLinks = uf.getLinks();
+        List<Link> factoryLinks = f.getLinks();
         Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
         if (!factoryUrl.isPresent()) {
             return Response.accepted(new GenericEntity<>("Updated factory do not contain mandatory \'create-workspace\' link", String.class))
@@ -188,7 +179,7 @@ public class VersionControlMonitorService extends Service {
         String url = factoryUrl.get();
 
         // Get connectors configured for the factory
-        List<Connector> connectors = getConnectors(uf.getId());
+        List<Connector> connectors = getConnectors(f.getId());
 
         // Display factory link within third-party services
         connectors.forEach(connector -> connector.addFactoryLink(url));
@@ -224,6 +215,7 @@ public class VersionControlMonitorService extends Service {
         }
 
         // Get head repository data
+        final String prHeadRepositoryHtmlUrl = prEvent.getPull_request().getHead().getRepo().getHtml_url();
         final String prHeadBranch = prEvent.getPull_request().getHead().getRef();
         final String prHeadCommitId = prEvent.getPull_request().getHead().getSha();
 
@@ -249,17 +241,19 @@ public class VersionControlMonitorService extends Service {
             return Response.accepted(new GenericEntity<>("No factory found for branch " + prHeadBranch, String.class)).build();
         }
 
-        // Update factory with origin repository & branch name
+        // Update factory with origin repository & head commit id
         Factory f = factory.get();
-        Optional<Factory> updatedFactory =
-                Optional.ofNullable(factoryConnection.updateFactory(f, prBaseRepositoryHtmlUrl, prHeadCommitId, token));
+        Optional<Factory> updatedFactory = Optional.ofNullable(
+                factoryConnection.updateFactory(f, prHeadRepositoryHtmlUrl, prHeadBranch, prBaseRepositoryHtmlUrl, prHeadCommitId, token));
         if (!updatedFactory.isPresent()) {
             return Response.accepted(
                     new GenericEntity<>("Factory not updated with branch " + prBaseBranch + " & commit " + prHeadCommitId,
                                       String.class)).build();
         }
-        LOG.info("Factory successfully updated with branch " + prBaseBranch + " at commit " + prHeadCommitId);
-        // TODO Remove factory from Github webhook
+        LOG.info("Factory successfully updated with base repository " + prBaseRepositoryHtmlUrl + " at commit " + prHeadCommitId);
+
+        // TODO Remove factory id from webhook
+
         return Response.ok().build();
     }
 

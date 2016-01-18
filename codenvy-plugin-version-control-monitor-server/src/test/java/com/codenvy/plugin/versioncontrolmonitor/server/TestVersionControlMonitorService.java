@@ -54,12 +54,9 @@ public class TestVersionControlMonitorService {
                                                                          Factory.class);
         FactoryConnection mockFactoryConnection = mock(FactoryConnection.class);
         when(mockFactoryConnection.getFactory("fakeFactoryId", fakeToken)).thenReturn(fakeFactory);
-        when(mockFactoryConnection.updateFactory(fakeFactory, "https://github.com/codenvy-demos/dashboard",
-                                                 "82d6fc75c8e59fe710fe0b6f04eeba153291c18b", fakeToken))
-                .thenReturn(fakeFactory);
-        when(mockFactoryConnection.updateFactory(fakeFactory, "https://github.com/codenvy-demos/dashboard",
-                                                 "d35d80c275514c226f4785a93ba34c46abb309e6", fakeToken))
-                .thenReturn(fakeFactory);
+        when(mockFactoryConnection.updateFactory(fakeFactory, "https://github.com/bmicklea-ce/dashboard", "MKTG-341",
+                                                 "https://github.com/codenvy-demos/dashboard", "d35d80c275514c226f4785a93ba34c46abb309e6",
+                                                 fakeToken)).thenReturn(fakeFactory);
 
         // Prepare VersionControlMonitorService
         fakeVersionControlMonitorService =

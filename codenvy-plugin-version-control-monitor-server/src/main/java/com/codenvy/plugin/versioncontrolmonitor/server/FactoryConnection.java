@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -157,45 +158,59 @@ public class FactoryConnection {
         return null;
     }
 
-    public Factory updateFactory(Factory oldFactory, String repository, String commitId, Token userToken) throws ServerException {
+    public Factory updateFactory(Factory oldFactory, String headRepository, String headBranch, String baseRepository, String headCommitId,
+                                 Token userToken) throws ServerException {
 
-        if (isNullOrEmpty(repository) || isNullOrEmpty(featureBranch) || isNullOrEmpty(commitId)) {
+        if (isNullOrEmpty(headRepository) || isNullOrEmpty(headBranch) || isNullOrEmpty(headCommitId)) {
             throw new ServerException(
                     "\'repository\', \'branch\' and \'commitId\' cannot be null. They are mandatory to update factory " +
                     oldFactory.getId() + ".");
         }
 
         WorkspaceConfigDto workspace = oldFactory.getWorkspace();
-        // Find project that matches factory data
+
+        // Find project that matches given repository and branch
+        final Predicate<ProjectConfigDto> matchingProjectPredicate = (p ->
+                                                                         p.getSource() != null
+                                                                         && !isNullOrEmpty(p.getSource().getType())
+                                                                         && !isNullOrEmpty(p.getSource().getLocation())
+                                                                         && headRepository.equals(p.getSource().getLocation())
+                                                                         || (headRepository + ".git").equals(p.getSource().getLocation())
+                                                                            && "master".equals(headBranch)
+                                                                         || !isNullOrEmpty(p.getSource().getParameters().get("branch"))
+                                                                            && headBranch
+                                                                                   .equals(p.getSource().getParameters().get("branch")));
         final List<ProjectConfigDto> projects = workspace.getProjects()
-                                                 .stream()
-                                                 .filter(projectConfig ->
-                                                                 projectConfig.getSource() != null
-                                                                 && !isNullOrEmpty(projectConfig.getSource().getType())
-                                                                 && !isNullOrEmpty(projectConfig.getSource().getLocation())
-                                                                 && projectConfig.getSource().getLocation().equals(
-                                                                         repository))
-                                                 .collect(toList());
+                                                         .stream()
+                                                         .filter(matchingProjectPredicate)
+                                                         .collect(toList());
 
         if (projects.size() == 0) {
             throw new ServerException(
-                    "Factory " + oldFactory.getId() + " contains no project that matches source location " + repository + ".");
+                    "Factory " + oldFactory.getId() + " contains no project for repository " + headRepository + " and branch " +
+                    headBranch + ".");
         } else if (projects.size() > 1) {
             throw new ServerException(
-                    "Factory " + oldFactory.getId() + " contains several projects that match source location " + repository + ".");
+                    "Factory " + oldFactory.getId() + " contains several projects for repository " + headRepository + " and branch " +
+                    headBranch + ".");
         }
 
-        // Get current factory data
+        // Get current factory source data
         ProjectConfigDto project = projects.get(0);
         final SourceStorageDto source = project.getSource();
         Map<String, String> projectParams = source.getParameters();
 
-        // Build new factory object with updated values
-        projectParams.put("commitId", commitId);
+        // Update repository and commitId
+        source.setLocation(baseRepository);
+        projectParams.put("commitId", headCommitId);
+
+        // Clean branch parameter if exist
+        projectParams.remove("branch");
+
+        // Replace existing project with updated one
         source.setParameters(projectParams);
         project.setSource(source);
-        // Replace existing project with updated one
-        projects.removeIf(p -> p.getSource().getLocation().equals(repository));
+        projects.removeIf(matchingProjectPredicate);
         projects.add(project);
         workspace.setProjects(projects);
         Factory updatedFactory = oldFactory.withWorkspace(workspace);
