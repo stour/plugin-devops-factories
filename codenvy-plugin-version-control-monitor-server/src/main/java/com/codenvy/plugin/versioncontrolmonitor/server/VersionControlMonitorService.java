@@ -67,7 +67,7 @@ import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 
 @Api(value = "/vcmonitor",
      description = "Version Control Monitor")
-@Path("/vcmonitor/{ws-id}")
+@Path("/vcmonitor")
 public class VersionControlMonitorService extends Service {
 
     private static final Logger LOG                             = LoggerFactory.getLogger(VersionControlMonitorService.class);
@@ -96,9 +96,7 @@ public class VersionControlMonitorService extends Service {
     @POST
     @Path("/github-webhook")
     @Consumes(APPLICATION_JSON)
-    public Response githubWebhook(@ApiParam(value = "ID of workspace to consider", required = true)
-                                  @PathParam("ws-id") String workspace,
-                                  @ApiParam(value = "New contribution", required = true)
+    public Response githubWebhook(@ApiParam(value = "New contribution", required = true)
                                   @Context HttpServletRequest request)
             throws ServerException {
 
