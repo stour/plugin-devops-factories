@@ -134,6 +134,6 @@ public class JenkinsConnector implements Connector {
             e.printStackTrace();
         }
         return document;
-    };
+    }
 }
 

@@ -168,7 +168,7 @@ public class FactoryConnection {
     public Factory updateFactory(Factory factory, Token userToken) throws ServerException {
         final String factoryId = factory.getId();
         final String url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "updateFactory")
-                                     .build(factoryId).toString();
+                                           .build(factoryId).toString();
 
         Factory newFactory;
         try {

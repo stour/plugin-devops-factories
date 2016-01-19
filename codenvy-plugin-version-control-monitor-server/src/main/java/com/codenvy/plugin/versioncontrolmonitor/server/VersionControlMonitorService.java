@@ -15,6 +15,7 @@ import com.codenvy.plugin.versioncontrolmonitor.server.connectors.JenkinsConnect
 import com.codenvy.plugin.versioncontrolmonitor.server.webhook.GithubWebhook;
 import com.codenvy.plugin.versioncontrolmonitor.shared.PullRequestEvent;
 import com.codenvy.plugin.versioncontrolmonitor.shared.PushEvent;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -161,15 +162,17 @@ public class VersionControlMonitorService extends Service {
 
         // Get factory that contains a project for given repository and branch
         final Predicate<ProjectConfigDto> matchingProjectPredicate = (p ->
-                                                                         p.getSource() != null
-                                                                         && !isNullOrEmpty(p.getSource().getType())
-                                                                         && !isNullOrEmpty(p.getSource().getLocation())
-                                                                         && contribRepositoryHtmlUrl.equals(p.getSource().getLocation())
-                                                                         || (contribRepositoryHtmlUrl + ".git").equals(p.getSource().getLocation())
-                                                                            && "master".equals(contribBranch)
-                                                                         || !isNullOrEmpty(p.getSource().getParameters().get("branch"))
-                                                                            && contribBranch.equals(
-                                                                               p.getSource().getParameters().get("branch")));
+                                                                              p.getSource() != null
+                                                                              && !isNullOrEmpty(p.getSource().getType())
+                                                                              && !isNullOrEmpty(p.getSource().getLocation())
+                                                                              &&
+                                                                              contribRepositoryHtmlUrl.equals(p.getSource().getLocation())
+                                                                              || (contribRepositoryHtmlUrl + ".git")
+                                                                                         .equals(p.getSource().getLocation())
+                                                                                 && "master".equals(contribBranch)
+                                                                              || !isNullOrEmpty(p.getSource().getParameters().get("branch"))
+                                                                                 && contribBranch.equals(
+                                                                                      p.getSource().getParameters().get("branch")));
         final Optional<Factory> factory = Optional.ofNullable(getFactoryThatContainsProject(factoryIDs, matchingProjectPredicate, token));
         if (!factory.isPresent()) {
             return Response.accepted(
@@ -243,15 +246,16 @@ public class VersionControlMonitorService extends Service {
 
         // Get factory that contains a project for given repository and branch
         final Predicate<ProjectConfigDto> matchingProjectPredicate = (p ->
-                                                                         p.getSource() != null
-                                                                         && !isNullOrEmpty(p.getSource().getType())
-                                                                         && !isNullOrEmpty(p.getSource().getLocation())
-                                                                         && prHeadRepositoryHtmlUrl.equals(p.getSource().getLocation())
-                                                                         || (prHeadRepositoryHtmlUrl + ".git").equals(p.getSource().getLocation())
-                                                                            && "master".equals(prHeadBranch)
-                                                                         || !isNullOrEmpty(p.getSource().getParameters().get("branch"))
-                                                                            && prHeadBranch.equals(
-                                                                               p.getSource().getParameters().get("branch")));
+                                                                              p.getSource() != null
+                                                                              && !isNullOrEmpty(p.getSource().getType())
+                                                                              && !isNullOrEmpty(p.getSource().getLocation())
+                                                                              && prHeadRepositoryHtmlUrl.equals(p.getSource().getLocation())
+                                                                              || (prHeadRepositoryHtmlUrl + ".git")
+                                                                                         .equals(p.getSource().getLocation())
+                                                                                 && "master".equals(prHeadBranch)
+                                                                              || !isNullOrEmpty(p.getSource().getParameters().get("branch"))
+                                                                                 && prHeadBranch.equals(
+                                                                                      p.getSource().getParameters().get("branch")));
         final Optional<Factory> factory = Optional.ofNullable(getFactoryThatContainsProject(factoryIDs, matchingProjectPredicate, token));
         if (!factory.isPresent()) {
             return Response.accepted(new GenericEntity<>("No factory found for branch " + prHeadBranch, String.class)).build();
@@ -328,9 +332,9 @@ public class VersionControlMonitorService extends Service {
         // Get matching project in factory
         WorkspaceConfigDto workspace = factory.getWorkspace();
         final List<ProjectConfigDto> matchingProjects = workspace.getProjects()
-                                                         .stream()
-                                                         .filter(matchingProjectPredicate)
-                                                         .collect(toList());
+                                                                 .stream()
+                                                                 .filter(matchingProjectPredicate)
+                                                                 .collect(toList());
 
         if (matchingProjects.size() == 0) {
             throw new ServerException(

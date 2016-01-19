@@ -19,7 +19,7 @@ package com.codenvy.plugin.versioncontrolmonitor.server.webhook;
  */
 public class GithubWebhook {
 
-    private final String repositoryUrl;
+    private final String   repositoryUrl;
     private final String[] factoryIDs;
 
     public GithubWebhook(String repositoryUrl, String[] factoryIDs) {
@@ -37,7 +37,6 @@ public class GithubWebhook {
     }
 
     /**
-     *
      * Configure a webhook on a Github repository
      */
     public void configure() {
