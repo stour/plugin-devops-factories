@@ -12,6 +12,7 @@ package com.codenvy.plugin.versioncontrolmonitor.server;
 
 import org.eclipse.che.api.auth.shared.dto.Token;
 import org.eclipse.che.api.factory.shared.dto.Factory;
+import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.junit.Assert;
 import org.junit.Before;
@@ -54,9 +55,8 @@ public class TestVersionControlMonitorService {
                                                                          Factory.class);
         FactoryConnection mockFactoryConnection = mock(FactoryConnection.class);
         when(mockFactoryConnection.getFactory("fakeFactoryId", fakeToken)).thenReturn(fakeFactory);
-        when(mockFactoryConnection.updateFactory(fakeFactory, "https://github.com/bmicklea-ce/dashboard", "MKTG-341",
-                                                 "https://github.com/codenvy-demos/dashboard", "d35d80c275514c226f4785a93ba34c46abb309e6",
-                                                 fakeToken)).thenReturn(fakeFactory);
+        ProjectConfigDto project = fakeFactory.getWorkspace().getProjects().get(0);
+        when(mockFactoryConnection.updateFactory(fakeFactory, project, fakeToken)).thenReturn(fakeFactory);
 
         // Prepare VersionControlMonitorService
         fakeVersionControlMonitorService =

@@ -159,87 +159,35 @@ public class FactoryConnection {
     }
 
     /**
-     * @param oldFactory
+     * Update a given project into a given factory
+     *
+     * @param factory
      *         the factory to update
-     * @param headRepository
-     *         the repository that is value of source location for the matching project in oldFactory
-     * @param headBranch
-     *         the branch that is value of source parameter 'branch' for the matching project in oldFactory
-     * @param baseRepository
-     *         the new repository to set as value of source location in the maching project in oldFactory
-     * @param headCommitId
-     *         the commit id to set as value of source parameter 'commitId' in the maching project in oldFactory
+     * @param project
+     *         the new instance of the project to update into the factory
      * @param userToken
      *         the authentication token to use in order to call the Codenvy API
      * @return the updated factory or null if an error occurs during the 'updateFactory' API call
      * @throws ServerException
      */
-    public Factory updateFactory(Factory oldFactory, String headRepository, String headBranch, String baseRepository, String headCommitId,
-                                 Token userToken) throws ServerException {
+    public Factory updateFactory(Factory factory, ProjectConfigDto project, Token userToken) throws ServerException {
 
-        if (isNullOrEmpty(headRepository) || isNullOrEmpty(headBranch) || isNullOrEmpty(headCommitId)) {
-            throw new ServerException(
-                    "\'repository\', \'branch\' and \'commitId\' cannot be null. They are mandatory to update factory " +
-                    oldFactory.getId() + ".");
-        }
-
-        WorkspaceConfigDto workspace = oldFactory.getWorkspace();
-
-        // Find project that matches given repository and branch
-        final Predicate<ProjectConfigDto> matchingProjectPredicate = (p ->
-                                                                         p.getSource() != null
-                                                                         && !isNullOrEmpty(p.getSource().getType())
-                                                                         && !isNullOrEmpty(p.getSource().getLocation())
-                                                                         && headRepository.equals(p.getSource().getLocation())
-                                                                         || (headRepository + ".git").equals(p.getSource().getLocation())
-                                                                            && "master".equals(headBranch)
-                                                                         || !isNullOrEmpty(p.getSource().getParameters().get("branch"))
-                                                                            && headBranch
-                                                                                   .equals(p.getSource().getParameters().get("branch")));
-        final List<ProjectConfigDto> projects = workspace.getProjects()
-                                                         .stream()
-                                                         .filter(matchingProjectPredicate)
-                                                         .collect(toList());
-
-        if (projects.size() == 0) {
-            throw new ServerException(
-                    "Factory " + oldFactory.getId() + " contains no project for repository " + headRepository + " and branch " +
-                    headBranch + ".");
-        } else if (projects.size() > 1) {
-            throw new ServerException(
-                    "Factory " + oldFactory.getId() + " contains several projects for repository " + headRepository + " and branch " +
-                    headBranch + ".");
-        }
-
-        // Get current factory source data
-        ProjectConfigDto project = projects.get(0);
-        final SourceStorageDto source = project.getSource();
-        Map<String, String> projectParams = source.getParameters();
-
-        // Update repository and commitId
-        source.setLocation(baseRepository);
-        projectParams.put("commitId", headCommitId);
-
-        // Clean branch parameter if exist
-        projectParams.remove("branch");
-
-        // Replace existing project with updated one
-        source.setParameters(projectParams);
-        project.setSource(source);
-        projects.removeIf(matchingProjectPredicate);
+        final WorkspaceConfigDto workspace = factory.getWorkspace();
+        final List<ProjectConfigDto> projects = workspace.getProjects();
+        projects.removeIf(p -> project.getName().equals(p.getName()));
         projects.add(project);
         workspace.setProjects(projects);
-        Factory updatedFactory = oldFactory.withWorkspace(workspace);
+        final Factory updatedFactory = factory.withWorkspace(workspace);
 
         // Update factory
         final String factoryId = updatedFactory.getId();
-        String url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "updateFactory")
+        final String url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "updateFactory")
                                      .build(factoryId).toString();
 
         Factory newFactory;
         try {
             if (userToken != null) {
-                Pair tokenParam = Pair.of("token", userToken.getValue());
+                final Pair tokenParam = Pair.of("token", userToken.getValue());
                 newFactory = HttpJsonHelper.put(Factory.class, url, updatedFactory, tokenParam);
             } else {
                 newFactory = HttpJsonHelper.put(Factory.class, url, updatedFactory);

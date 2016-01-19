@@ -27,6 +27,8 @@ import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.factory.shared.dto.Factory;
 import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
+import org.eclipse.che.api.workspace.shared.dto.SourceStorageDto;
+import org.eclipse.che.api.workspace.shared.dto.WorkspaceConfigDto;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.slf4j.Logger;
@@ -52,9 +54,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.stream.Collectors.toList;
@@ -159,9 +163,18 @@ public class VersionControlMonitorService extends Service {
         // Get factory id's listed into the webhook
         final List<String> factoryIDs = Arrays.asList(w.getFactoryIDs());
 
-        // Get id of factory that contains a project for given repository and branch
-        Optional<Factory> factory = Optional.ofNullable(getFactoryForRepositoryAndBranch(factoryIDs, contribRepositoryHtmlUrl,
-                                                                                         contribBranch, token));
+        // Get factory that contains a project for given repository and branch
+        final Predicate<ProjectConfigDto> matchingProjectPredicate = (p ->
+                                                                         p.getSource() != null
+                                                                         && !isNullOrEmpty(p.getSource().getType())
+                                                                         && !isNullOrEmpty(p.getSource().getLocation())
+                                                                         && contribRepositoryHtmlUrl.equals(p.getSource().getLocation())
+                                                                         || (contribRepositoryHtmlUrl + ".git").equals(p.getSource().getLocation())
+                                                                            && "master".equals(contribBranch)
+                                                                         || !isNullOrEmpty(p.getSource().getParameters().get("branch"))
+                                                                            && contribBranch.equals(
+                                                                               p.getSource().getParameters().get("branch")));
+        final Optional<Factory> factory = Optional.ofNullable(getFactoryThatContainsProject(factoryIDs, matchingProjectPredicate, token));
         if (!factory.isPresent()) {
             return Response.accepted(
                     new GenericEntity<>("No factory found for repository " + contribRepositoryHtmlUrl + " and branch " + contribBranch,
@@ -234,30 +247,67 @@ public class VersionControlMonitorService extends Service {
         // Get factory id's listed into the webhook
         final List<String> factoryIDs = Arrays.asList(w.getFactoryIDs());
 
-        // Get id of factory that contains a project for given repository and branch
-        Optional<Factory> factory = Optional.ofNullable(getFactoryForRepositoryAndBranch(factoryIDs, prBaseRepositoryHtmlUrl, prHeadBranch,
-                                                                                         token));
+        // Get factory that contains a project for given repository and branch
+        final Predicate<ProjectConfigDto> matchingProjectPredicate = (p ->
+                                                                         p.getSource() != null
+                                                                         && !isNullOrEmpty(p.getSource().getType())
+                                                                         && !isNullOrEmpty(p.getSource().getLocation())
+                                                                         && prHeadRepositoryHtmlUrl.equals(p.getSource().getLocation())
+                                                                         || (prHeadRepositoryHtmlUrl + ".git").equals(p.getSource().getLocation())
+                                                                            && "master".equals(prHeadBranch)
+                                                                         || !isNullOrEmpty(p.getSource().getParameters().get("branch"))
+                                                                            && prHeadBranch.equals(
+                                                                               p.getSource().getParameters().get("branch")));
+        final Optional<Factory> factory = Optional.ofNullable(getFactoryThatContainsProject(factoryIDs, matchingProjectPredicate, token));
         if (!factory.isPresent()) {
             return Response.accepted(new GenericEntity<>("No factory found for branch " + prHeadBranch, String.class)).build();
         }
+        final Factory f = factory.get();
 
-        // Update factory with origin repository & head commit id
-        Factory f = factory.get();
-        Optional<Factory> updatedFactory = Optional.ofNullable(
-                factoryConnection.updateFactory(f, prHeadRepositoryHtmlUrl, prHeadBranch, prBaseRepositoryHtmlUrl, prHeadCommitId, token));
+        // Get project that matches given repository and branch
+        final ProjectConfigDto project = getMatchingProject(f, matchingProjectPredicate);
+
+        // Update repository and commitId
+        final SourceStorageDto source = project.getSource();
+        final Map<String, String> projectParams = source.getParameters();
+        source.setLocation(prBaseRepositoryHtmlUrl);
+        projectParams.put("commitId", prHeadCommitId);
+
+        // Clean branch parameter if exist
+        projectParams.remove("branch");
+
+        // Replace existing project with updated one
+        source.setParameters(projectParams);
+        project.setSource(source);
+
+        // Update factory with new project data
+        final Optional<Factory> updatedFactory = Optional.ofNullable(factoryConnection.updateFactory(f, project, token));
         if (!updatedFactory.isPresent()) {
             return Response.accepted(
-                    new GenericEntity<>("Factory not updated with branch " + prBaseBranch + " & commit " + prHeadCommitId,
-                                      String.class)).build();
+                    new GenericEntity<>(
+                            "Error during update of factory with repository " + prBaseRepositoryHtmlUrl + " & commit " + prHeadCommitId,
+                            String.class)).build();
         }
-        LOG.info("Factory successfully updated with base repository " + prBaseRepositoryHtmlUrl + " at commit " + prHeadCommitId);
+        LOG.info("Factory successfully updated with repository " + prBaseRepositoryHtmlUrl + " at commit " + prHeadCommitId);
 
         // TODO Remove factory id from webhook
 
         return Response.ok().build();
     }
 
-    protected Factory getFactoryForRepositoryAndBranch(List<String> factoryIDs, String repository, String branch, Token token)
+    /**
+     * Get the factory that contains a project matching a predicate
+     *
+     * @param factoryIDs
+     *         Id's of factories to search into
+     * @param matchingPredicate
+     *         the matching predicate projects must fulfill
+     * @param token
+     *         the authentication token to use against Codenvy API
+     * @return the first factory that contains a project that matches the predicate
+     * @throws ServerException
+     */
+    protected Factory getFactoryThatContainsProject(List<String> factoryIDs, Predicate<ProjectConfigDto> matchingPredicate, Token token)
             throws ServerException {
         Factory factory = null;
         for (String factoryId : factoryIDs) {
@@ -266,17 +316,8 @@ public class VersionControlMonitorService extends Service {
                 final Factory f = obtainedFactory.get();
                 final List<ProjectConfigDto> projects = f.getWorkspace().getProjects()
                                                          .stream()
-                                                         .filter(p ->
-                                                                         p.getSource() != null
-                                                                         && !isNullOrEmpty(p.getSource().getType())
-                                                                         && !isNullOrEmpty(p.getSource().getLocation())
-                                                                         && repository.equals(p.getSource().getLocation())
-                                                                         || (repository + ".git").equals(p.getSource().getLocation())
-                                                                            && "master".equals(branch)
-                                                                         || !isNullOrEmpty(p.getSource().getParameters().get("branch"))
-                                                                            && branch.equals(p.getSource().getParameters().get("branch")))
+                                                         .filter(matchingPredicate)
                                                          .collect(toList());
-
                 if (!projects.isEmpty()) {
                     factory = f;
                     break;
@@ -284,6 +325,34 @@ public class VersionControlMonitorService extends Service {
             }
         }
         return factory;
+    }
+
+    /**
+     * Get the project contained in given factory that matches given predicate
+     *
+     * @param factory
+     *         the factory to search for projects
+     * @param matchingProjectPredicate
+     *         the matching predicate projects must fulfill
+     * @return the project that matches the predicate given in argument
+     * @throws ServerException
+     */
+    protected ProjectConfigDto getMatchingProject(Factory factory, Predicate<ProjectConfigDto> matchingProjectPredicate)
+            throws ServerException {
+        WorkspaceConfigDto workspace = factory.getWorkspace();
+        final List<ProjectConfigDto> projects = workspace.getProjects()
+                                                         .stream()
+                                                         .filter(matchingProjectPredicate)
+                                                         .collect(toList());
+
+        if (projects.size() == 0) {
+            throw new ServerException(
+                    "Factory " + factory.getId() + " contains no project for given repository and branch.");
+        } else if (projects.size() > 1) {
+            throw new ServerException(
+                    "Factory " + factory.getId() + " contains several projects for given repository and branch");
+        }
+        return projects.get(0);
     }
 
     protected GithubWebhook getWebhook(String repositoryUrl) throws ServerException {
