@@ -143,8 +143,8 @@ public class VersionControlMonitorService extends Service {
         LOG.info("contribution.after: " + contribution.getAfter());
 
         // Authenticate on Codenvy
-        Pair<String, String> credentials = getCredentials();
-        Token token = authConnection.authenticateUser(credentials.first, credentials.second);
+        final Pair<String, String> credentials = getCredentials();
+        final Token token = authConnection.authenticateUser(credentials.first, credentials.second);
 
         // Get contribution data
         final String contribRepositoryHtmlUrl = contribution.getRepository().getHtml_url();
@@ -153,12 +153,12 @@ public class VersionControlMonitorService extends Service {
         final String contribCommitId = contribution.getAfter();
 
         // Get webhook configured for given repository
-        Optional<GithubWebhook> webhook = Optional.ofNullable(getWebhook(contribRepositoryHtmlUrl));
+        final Optional<GithubWebhook> webhook = Optional.ofNullable(getWebhook(contribRepositoryHtmlUrl));
         if (!webhook.isPresent()) {
             return Response.accepted(new GenericEntity<>("No webhook configured for repository " + contribRepositoryHtmlUrl, String.class))
                            .build();
         }
-        GithubWebhook w = webhook.get();
+        final GithubWebhook w = webhook.get();
 
         // Get factory id's listed into the webhook
         final List<String> factoryIDs = Arrays.asList(w.getFactoryIDs());
@@ -182,17 +182,17 @@ public class VersionControlMonitorService extends Service {
         }
 
         // Get 'open factory' URL
-        Factory f = factory.get();
-        List<Link> factoryLinks = f.getLinks();
-        Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
+        final Factory f = factory.get();
+        final List<Link> factoryLinks = f.getLinks();
+        final Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
         if (!factoryUrl.isPresent()) {
             return Response.accepted(new GenericEntity<>("Updated factory do not contain mandatory \'create-workspace\' link", String.class))
                            .build();
         }
-        String url = factoryUrl.get();
+        final String url = factoryUrl.get();
 
         // Get connectors configured for the factory
-        List<Connector> connectors = getConnectors(f.getId());
+        final List<Connector> connectors = getConnectors(f.getId());
 
         // Display factory link within third-party services
         connectors.forEach(connector -> connector.addFactoryLink(url));
@@ -209,11 +209,11 @@ public class VersionControlMonitorService extends Service {
         LOG.info("pull_request.base.ref: " + prEvent.getPull_request().getBase().getRef());
 
         // Authenticate on Codenvy
-        Pair<String, String> credentials = getCredentials();
-        Token token = authConnection.authenticateUser(credentials.first, credentials.second);
+        final Pair<String, String> credentials = getCredentials();
+        final Token token = authConnection.authenticateUser(credentials.first, credentials.second);
 
         // Check that event indicates a successful merging
-        String action = prEvent.getAction();
+        final String action = prEvent.getAction();
         if (!"closed".equals(action)) {
             return Response
                     .accepted(new GenericEntity<>(
@@ -221,8 +221,7 @@ public class VersionControlMonitorService extends Service {
                             String.class))
                     .build();
         }
-
-        boolean isMerged = prEvent.getPull_request().getMerged();
+        final boolean isMerged = prEvent.getPull_request().getMerged();
         if (!isMerged) {
             return Response.accepted(new GenericEntity<>("Pull Request was closed with unmerged commits !", String.class)).build();
         }
@@ -237,12 +236,12 @@ public class VersionControlMonitorService extends Service {
         final String prBaseBranch = prEvent.getPull_request().getBase().getRef();
 
         // Get webhook configured for given repository
-        Optional<GithubWebhook> webhook = Optional.ofNullable(getWebhook(prBaseRepositoryHtmlUrl));
+        final Optional<GithubWebhook> webhook = Optional.ofNullable(getWebhook(prBaseRepositoryHtmlUrl));
         if (!webhook.isPresent()) {
             return Response.accepted(new GenericEntity<>("No webhook configured for repository " + prBaseRepositoryHtmlUrl, String.class))
                            .build();
         }
-        GithubWebhook w = webhook.get();
+        final GithubWebhook w = webhook.get();
 
         // Get factory id's listed into the webhook
         final List<String> factoryIDs = Arrays.asList(w.getFactoryIDs());
