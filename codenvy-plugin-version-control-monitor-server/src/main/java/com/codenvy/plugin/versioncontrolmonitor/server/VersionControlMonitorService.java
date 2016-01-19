@@ -150,7 +150,6 @@ public class VersionControlMonitorService extends Service {
         final String contribRepositoryHtmlUrl = contribution.getRepository().getHtml_url();
         final String[] contribRefSplit = contribution.getRef().split("/");
         final String contribBranch = contribRefSplit[contribRefSplit.length - 1];
-        final String contribCommitId = contribution.getAfter();
 
         // Get webhook configured for given repository
         final Optional<GithubWebhook> webhook = Optional.ofNullable(getWebhook(contribRepositoryHtmlUrl));
@@ -231,9 +230,8 @@ public class VersionControlMonitorService extends Service {
         final String prHeadBranch = prEvent.getPull_request().getHead().getRef();
         final String prHeadCommitId = prEvent.getPull_request().getHead().getSha();
 
-        // Get base repository data (values after merge)
+        // Get base repository data
         final String prBaseRepositoryHtmlUrl = prEvent.getPull_request().getBase().getRepo().getHtml_url();
-        final String prBaseBranch = prEvent.getPull_request().getBase().getRef();
 
         // Get webhook configured for given repository
         final Optional<GithubWebhook> webhook = Optional.ofNullable(getWebhook(prBaseRepositoryHtmlUrl));
@@ -284,10 +282,11 @@ public class VersionControlMonitorService extends Service {
         if (!updatedFactory.isPresent()) {
             return Response.accepted(
                     new GenericEntity<>(
-                            "Error during update of factory with repository " + prBaseRepositoryHtmlUrl + " & commit " + prHeadCommitId,
+                            "Error during update of factory with source location " + prBaseRepositoryHtmlUrl + " & commitId " +
+                            prHeadCommitId,
                             String.class)).build();
         }
-        LOG.info("Factory successfully updated with repository " + prBaseRepositoryHtmlUrl + " at commit " + prHeadCommitId);
+        LOG.info("Factory successfully updated with source location " + prBaseRepositoryHtmlUrl + " & commitId " + prHeadCommitId);
 
         // TODO Remove factory id from webhook
 
