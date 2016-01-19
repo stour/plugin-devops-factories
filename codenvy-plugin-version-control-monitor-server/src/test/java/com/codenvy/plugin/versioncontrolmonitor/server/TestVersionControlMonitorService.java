@@ -55,8 +55,7 @@ public class TestVersionControlMonitorService {
                                                                          Factory.class);
         FactoryConnection mockFactoryConnection = mock(FactoryConnection.class);
         when(mockFactoryConnection.getFactory("fakeFactoryId", fakeToken)).thenReturn(fakeFactory);
-        ProjectConfigDto project = fakeFactory.getWorkspace().getProjects().get(0);
-        when(mockFactoryConnection.updateFactory(fakeFactory, project, fakeToken)).thenReturn(fakeFactory);
+        when(mockFactoryConnection.updateFactory(fakeFactory, fakeToken)).thenReturn(fakeFactory);
 
         // Prepare VersionControlMonitorService
         fakeVersionControlMonitorService =

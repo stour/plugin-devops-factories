@@ -49,11 +49,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static javax.ws.rs.core.UriBuilder.fromUri;
@@ -163,24 +160,13 @@ public class FactoryConnection {
      *
      * @param factory
      *         the factory to update
-     * @param project
-     *         the new instance of the project to update into the factory
      * @param userToken
      *         the authentication token to use in order to call the Codenvy API
      * @return the updated factory or null if an error occurs during the 'updateFactory' API call
      * @throws ServerException
      */
-    public Factory updateFactory(Factory factory, ProjectConfigDto project, Token userToken) throws ServerException {
-
-        final WorkspaceConfigDto workspace = factory.getWorkspace();
-        final List<ProjectConfigDto> projects = workspace.getProjects();
-        projects.removeIf(p -> project.getName().equals(p.getName()));
-        projects.add(project);
-        workspace.setProjects(projects);
-        final Factory updatedFactory = factory.withWorkspace(workspace);
-
-        // Update factory
-        final String factoryId = updatedFactory.getId();
+    public Factory updateFactory(Factory factory, Token userToken) throws ServerException {
+        final String factoryId = factory.getId();
         final String url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "updateFactory")
                                      .build(factoryId).toString();
 
@@ -188,9 +174,9 @@ public class FactoryConnection {
         try {
             if (userToken != null) {
                 final Pair tokenParam = Pair.of("token", userToken.getValue());
-                newFactory = HttpJsonHelper.put(Factory.class, url, updatedFactory, tokenParam);
+                newFactory = HttpJsonHelper.put(Factory.class, url, factory, tokenParam);
             } else {
-                newFactory = HttpJsonHelper.put(Factory.class, url, updatedFactory);
+                newFactory = HttpJsonHelper.put(Factory.class, url, factory);
             }
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);

@@ -41,7 +41,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.Response;
@@ -183,7 +182,7 @@ public class VersionControlMonitorService extends Service {
         final List<Link> factoryLinks = f.getLinks();
         final Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
         if (!factoryUrl.isPresent()) {
-            return Response.accepted(new GenericEntity<>("Updated factory do not contain mandatory \'create-workspace\' link", String.class))
+            return Response.accepted(new GenericEntity<>("Factory do not contain mandatory \'create-workspace\' link", String.class))
                            .build();
         }
         final String url = factoryUrl.get();
@@ -259,25 +258,12 @@ public class VersionControlMonitorService extends Service {
         }
         final Factory f = factory.get();
 
-        // Get project that matches given repository and branch
-        final ProjectConfigDto project = getMatchingProject(f, matchingProjectPredicate);
-
-        // Update repository and commitId
-        final SourceStorageDto source = project.getSource();
-        final Map<String, String> projectParams = source.getParameters();
-        source.setLocation(prBaseRepositoryHtmlUrl);
-        projectParams.put("commitId", prHeadCommitId);
-
-        // Clean branch parameter if exist
-        projectParams.remove("branch");
-
-        // Replace existing project with updated one
-        source.setParameters(projectParams);
-        project.setSource(source);
+        // Update project into the factory with given repository and branch
+        final Factory updatedfactory = updateProjectInFactory(f, matchingProjectPredicate, prBaseRepositoryHtmlUrl, prHeadCommitId);
 
         // Update factory with new project data
-        final Optional<Factory> updatedFactory = Optional.ofNullable(factoryConnection.updateFactory(f, project, token));
-        if (!updatedFactory.isPresent()) {
+        final Optional<Factory> persistedFactory = Optional.ofNullable(factoryConnection.updateFactory(updatedfactory, token));
+        if (!persistedFactory.isPresent()) {
             return Response.accepted(
                     new GenericEntity<>(
                             "Error during update of factory with source location " + prBaseRepositoryHtmlUrl + " & commitId " +
@@ -324,31 +310,56 @@ public class VersionControlMonitorService extends Service {
     }
 
     /**
-     * Get the project contained in given factory that matches given predicate
+     * Update project matching given predicate in given factory
      *
      * @param factory
      *         the factory to search for projects
      * @param matchingProjectPredicate
-     *         the matching predicate projects must fulfill
+     *         the matching predicate project must fulfill
+     * @param baseRepository
+     *         the repository to set as source location for matching project in factory
+     * @param headCommitId
+     *         the commitId to set as 'commitId' parameter for matching project in factory
      * @return the project that matches the predicate given in argument
      * @throws ServerException
      */
-    protected ProjectConfigDto getMatchingProject(Factory factory, Predicate<ProjectConfigDto> matchingProjectPredicate)
-            throws ServerException {
+    protected Factory updateProjectInFactory(Factory factory, Predicate<ProjectConfigDto> matchingProjectPredicate, String baseRepository,
+                                             String headCommitId) throws ServerException {
+        // Get matching project in factory
         WorkspaceConfigDto workspace = factory.getWorkspace();
-        final List<ProjectConfigDto> projects = workspace.getProjects()
+        final List<ProjectConfigDto> matchingProjects = workspace.getProjects()
                                                          .stream()
                                                          .filter(matchingProjectPredicate)
                                                          .collect(toList());
 
-        if (projects.size() == 0) {
+        if (matchingProjects.size() == 0) {
             throw new ServerException(
                     "Factory " + factory.getId() + " contains no project for given repository and branch.");
-        } else if (projects.size() > 1) {
+        } else if (matchingProjects.size() > 1) {
             throw new ServerException(
                     "Factory " + factory.getId() + " contains several projects for given repository and branch");
         }
-        return projects.get(0);
+        ProjectConfigDto matchingProject = matchingProjects.get(0);
+
+        // Update repository and commitId
+        final SourceStorageDto source = matchingProject.getSource();
+        final Map<String, String> projectParams = source.getParameters();
+        source.setLocation(baseRepository);
+        projectParams.put("commitId", headCommitId);
+
+        // Clean branch parameter if exist
+        projectParams.remove("branch");
+
+        // Replace existing project with updated one
+        source.setParameters(projectParams);
+        matchingProject.setSource(source);
+
+        final List<ProjectConfigDto> factoryProjects = workspace.getProjects();
+        factoryProjects.removeIf(p -> matchingProject.getName().equals(p.getName()));
+        factoryProjects.add(matchingProject);
+        workspace.setProjects(factoryProjects);
+
+        return factory.withWorkspace(workspace);
     }
 
     protected GithubWebhook getWebhook(String repositoryUrl) throws ServerException {
