@@ -74,6 +74,7 @@ public class VersionControlMonitorService extends Service {
     private static final String CREDENTIALS_PROPERTIES_FILENAME = "credentials.properties";
     private static final String WEBHOOKS_PROPERTIES_FILENAME    = "webhooks.properties";
     private static final String GITHUB_REQUEST_HEADER           = "X-GitHub-Event";
+    private static final String FACTORY_URL_REL                 = "accept-named";
 
     private final AuthConnection    authConnection;
     private final FactoryConnection factoryConnection;
@@ -186,9 +187,9 @@ public class VersionControlMonitorService extends Service {
         // Get 'open factory' URL
         final Factory f = factory.get();
         final List<Link> factoryLinks = f.getLinks();
-        final Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks);
+        final Optional<String> factoryUrl = FactoryConnection.getFactoryUrl(factoryLinks, FACTORY_URL_REL);
         if (!factoryUrl.isPresent()) {
-            return Response.accepted(new GenericEntity<>("Factory do not contain mandatory \'create-workspace\' link", String.class))
+            return Response.accepted(new GenericEntity<>("Factory do not contain mandatory \'" + FACTORY_URL_REL + "\' link", String.class))
                            .build();
         }
         final String url = factoryUrl.get();

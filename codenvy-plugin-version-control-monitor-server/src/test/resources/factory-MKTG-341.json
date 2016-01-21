@@ -1,5 +1,6 @@
 {
   "v":"4.0",
+  "name":"factory-mktg-341",
   "workspace":{
     "environments":{
       "test-env":{
@@ -66,9 +67,13 @@
     ]
   },
   "id":"fakeFactoryId",
+  "creator":{
+    "created":1453385596798,
+    "userId":"useraxi5p0fe2mlmmf3r"
+  },
   "links":[
     {
-      "href":"http://internal.codenvycorp.com/api/factory/3didaezm4gif4agy",
+      "href":"http://internal.codenvycorp.com/api/factory/fakeFactoryId",
       "parameters":[
 
       ],
@@ -77,7 +82,7 @@
       "produces":"application/json"
     },
     {
-      "href":"http://internal.codenvycorp.com/api/factory/3didaezm4gif4agy/snippet?type=markdown",
+      "href":"http://internal.codenvycorp.com/api/factory/fakeFactoryId/snippet?type=markdown",
       "parameters":[
 
       ],
@@ -86,7 +91,7 @@
       "produces":"text/plain"
     },
     {
-      "href":"http://internal.codenvycorp.com/api/factory/3didaezm4gif4agy/snippet?type=url",
+      "href":"http://internal.codenvycorp.com/api/factory/fakeFactoryId/snippet?type=url",
       "parameters":[
 
       ],
@@ -95,7 +100,7 @@
       "produces":"text/plain"
     },
     {
-      "href":"http://internal.codenvycorp.com/api/factory/3didaezm4gif4agy/snippet?type=html",
+      "href":"http://internal.codenvycorp.com/api/factory/fakeFactoryId/snippet?type=html",
       "parameters":[
 
       ],
@@ -104,7 +109,7 @@
       "produces":"text/plain"
     },
     {
-      "href":"http://internal.codenvycorp.com/api/factory/3didaezm4gif4agy/snippet?type=iframe",
+      "href":"http://internal.codenvycorp.com/api/factory/fakeFactoryId/snippet?type=iframe",
       "parameters":[
 
       ],
@@ -113,16 +118,25 @@
       "produces":"text/plain"
     },
     {
-      "href":"http://internal.codenvycorp.com/f?id=3didaezm4gif4agy",
+      "href":"http://internal.codenvycorp.com/f?id=fakeFactoryId",
       "parameters":[
 
       ],
-      "rel":"create-workspace",
+      "rel":"accept",
       "method":"GET",
       "produces":"text/html"
     },
     {
-      "href":"http://internal.codenvycorp.com/api/analytics/public-metric/factory_used?factory=http%3A%2F%2Finternal.codenvycorp.com%2Ff%3Fid%3D3didaezm4gif4agy",
+      "href":"http://internal.codenvycorp.com/f?name=factory-mktg-341&user=useraxi5p0fe2mlmmf3r",
+      "parameters":[
+
+      ],
+      "rel":"accept-named",
+      "method":"GET",
+      "produces":"text/html"
+    },
+    {
+      "href":"http://internal.codenvycorp.com/api/analytics/public-metric/factory_used?factory=http%3A%2F%2Finternal.codenvycorp.com%2Ff%3Fid%3DfakeFactoryId",
       "parameters":[
 
       ],

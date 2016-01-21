@@ -240,13 +240,12 @@ public class FactoryConnection {
         return newFactory;
     }
 
-    public static Optional<String> getFactoryUrl(final List<Link> factoryLinks) {
+    public static Optional<String> getFactoryUrl(final List<Link> factoryLinks, String rel) {
         List<Link> createProjectLinks = factoryLinks.stream()
-                                                    .filter(link -> "create-workspace".equals(link.getRel())).collect(Collectors.toList());
+                                                    .filter(link -> rel.equals(link.getRel())).collect(Collectors.toList());
         if (!createProjectLinks.isEmpty()) {
             return Optional.of(createProjectLinks.get(0).getHref());
-        } else {
-            return Optional.empty();
         }
+        return Optional.empty();
     }
 }
