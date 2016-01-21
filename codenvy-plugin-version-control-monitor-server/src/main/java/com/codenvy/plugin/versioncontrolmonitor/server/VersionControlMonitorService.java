@@ -63,7 +63,6 @@ import java.util.function.Predicate;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 
 @Api(value = "/vcmonitor",
      description = "Version Control Monitor")
@@ -74,6 +73,7 @@ public class VersionControlMonitorService extends Service {
     private static final String CONNECTORS_PROPERTIES_FILENAME  = "connectors.properties";
     private static final String CREDENTIALS_PROPERTIES_FILENAME = "credentials.properties";
     private static final String WEBHOOKS_PROPERTIES_FILENAME    = "webhooks.properties";
+    private static final String GITHUB_REQUEST_HEADER           = "X-GitHub-Event";
 
     private final AuthConnection    authConnection;
     private final FactoryConnection factoryConnection;
@@ -103,7 +103,7 @@ public class VersionControlMonitorService extends Service {
         LOG.info("githubWebhook");
 
         Response response;
-        String githubHeader = request.getHeader("X-GitHub-Event");
+        String githubHeader = request.getHeader(GITHUB_REQUEST_HEADER);
         switch (githubHeader) {
             case "push":
                 try {
@@ -126,7 +126,10 @@ public class VersionControlMonitorService extends Service {
                 }
                 break;
             default:
-                response = Response.status(NOT_IMPLEMENTED).build();
+                response = Response.ok(
+                        new GenericEntity<>("GitHub message \'" + githubHeader + "\' received. It isn't intended to be processed.",
+                                            String.class))
+                                   .build();
                 break;
         }
         return response;
