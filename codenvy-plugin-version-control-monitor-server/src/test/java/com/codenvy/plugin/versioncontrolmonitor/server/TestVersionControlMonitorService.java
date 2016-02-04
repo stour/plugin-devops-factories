@@ -35,6 +35,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static javax.ws.rs.core.Response.Status.OK;
 
+/**
+ * Unit tests for VersionControlMonitorService
+ *
+ * @author Stephane Tournie
+ */
 @RunWith(MockitoJUnitRunner.class)
 public class TestVersionControlMonitorService {
 
@@ -107,6 +112,14 @@ public class TestVersionControlMonitorService {
         return mockRequest;
     }
 
+    /**
+     * Read file as String
+     *
+     * @param path path to the file to read
+     * @param encoding charset used to encode
+     * @return
+     * @throws IOException
+     */
     protected String readFile(String path, Charset encoding) throws IOException {
         byte[] encoded = Files.readAllBytes(Paths.get(path));
         return new String(encoded, encoding);

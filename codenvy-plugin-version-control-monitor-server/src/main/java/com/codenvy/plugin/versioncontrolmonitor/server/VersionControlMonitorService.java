@@ -64,6 +64,11 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
+/**
+ * GitHub webhooks handler
+ *
+ * @author Stephane Tournie
+ */
 @Api(value = "/vcmonitor",
      description = "Version Control Monitor")
 @Path("/vcmonitor")
@@ -85,7 +90,7 @@ public class VersionControlMonitorService extends Service {
         this.factoryConnection = factoryConnection;
     }
 
-    @ApiOperation(value = "Notify a new contribution on a GitHub project",
+    @ApiOperation(value = "Handle GitHub webhook events",
                   response = Response.class)
     @ApiResponses({@ApiResponse(
             code = 200,
@@ -136,6 +141,15 @@ public class VersionControlMonitorService extends Service {
         return response;
     }
 
+    /**
+     * Handle GitHub {@link PushEvent}
+     *
+     * @param contribution
+     *         the push event to handle
+     * @return HTTP 200 response if event was processed successfully
+     * HTTP 202 response if event was processed partially
+     * @throws ServerException
+     */
     protected Response handlePushEvent(PushEvent contribution) throws ServerException {
         LOG.info("handlePushEvent");
         LOG.info("contribution.ref: " + contribution.getRef());
@@ -203,6 +217,15 @@ public class VersionControlMonitorService extends Service {
 
     }
 
+    /**
+     * Handle GitHub {@link PullRequestEvent}
+     *
+     * @param prEvent
+     *         the pull request event to handle
+     * @return HTTP 200 response if event was processed successfully
+     * HTTP 202 response if event was processed partially
+     * @throws ServerException
+     */
     protected Response handlePullRequestEvent(PullRequestEvent prEvent) throws ServerException {
         LOG.info("handlePullRequestEvent");
         LOG.info("pull_request.head.repository.html_url: " + prEvent.getPull_request().getHead().getRepo().getHtml_url());
@@ -370,6 +393,14 @@ public class VersionControlMonitorService extends Service {
         return factory.withWorkspace(workspace);
     }
 
+    /**
+     * Get webhook configured for a given repository
+     *
+     * @param repositoryUrl
+     *         the URL of the repository
+     * @return the webhook configured for the repository or null if no webhook is configured for this repository
+     * @throws ServerException
+     */
     protected GithubWebhook getWebhook(String repositoryUrl) throws ServerException {
         List<GithubWebhook> webhooks = getWebhooks();
         GithubWebhook webhook = null;
@@ -383,7 +414,8 @@ public class VersionControlMonitorService extends Service {
     }
 
     /**
-     * Description of webhooks in properties file is:
+     * Get all configured webhooks
+     *
      * GitHub webhook: [webhook-name]=[webhook-type],[repository-url],[factory-id];[factory-id];...;[factory-id]
      *
      * @return the list of all webhooks contained in properties file {@link WEBHOOKS_PROPERTIES_FILENAME}
@@ -412,7 +444,8 @@ public class VersionControlMonitorService extends Service {
     }
 
     /**
-     * Description of connectors in properties file is:
+     * Get all configured connectors
+     *
      * Jenkins connector: [connector-name]=[connector-type],[factory-id],[jenkins-url],[jenkins-job-name]
      *
      * @param factoryId
@@ -445,6 +478,12 @@ public class VersionControlMonitorService extends Service {
         return connectors;
     }
 
+    /**
+     * Get credentials
+     *
+     * @return the credentials contained in properties file {@link CREDENTIALS_PROPERTIES_FILENAME}
+     * @throws ServerException
+     */
     protected static Pair<String, String> getCredentials() throws ServerException {
         String[] credentials = new String[2];
         Optional<Properties> credentialsProperties = Optional.ofNullable(getProperties(CREDENTIALS_PROPERTIES_FILENAME));
@@ -467,6 +506,14 @@ public class VersionControlMonitorService extends Service {
         return Pair.of(credentials[0], credentials[1]);
     }
 
+    /**
+     * Get all properties contained in a given file
+     *
+     * @param fileName
+     *         the name of the properties file
+     * @return the {@link Properties} contained in the given file or null if the file contains no properties
+     * @throws ServerException
+     */
     protected static Properties getProperties(String fileName) throws ServerException {
         java.nio.file.Path currentRelativePath = Paths.get("", fileName);
         String currentRelativePathString = currentRelativePath.toAbsolutePath().toString();
