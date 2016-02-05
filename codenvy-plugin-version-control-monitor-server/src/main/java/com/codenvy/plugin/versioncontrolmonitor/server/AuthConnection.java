@@ -83,6 +83,5 @@ public class AuthConnection {
             LOG.debug("successfully authenticated with token " + userToken);
         }
         return userToken;
-
     }
 }

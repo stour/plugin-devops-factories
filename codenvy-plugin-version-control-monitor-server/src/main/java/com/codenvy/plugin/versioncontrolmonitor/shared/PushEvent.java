@@ -99,11 +99,4 @@ public interface PushEvent {
     void setPusher(final User pusher);
 
     PushEvent withPusher(final User pusher);
-
-
-/*    Sender getSender();
-
-    void setSender(final Sender sender);
-
-    PushEvent withSender(final Sender sender); */
 }
