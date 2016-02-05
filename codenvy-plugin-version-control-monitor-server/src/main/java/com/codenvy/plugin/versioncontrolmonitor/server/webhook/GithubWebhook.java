@@ -35,11 +35,4 @@ public class GithubWebhook {
     public String[] getFactoryIDs() {
         return factoryIDs;
     }
-
-    /**
-     * Configure a webhook on a Github repository
-     */
-    public void configure() {
-
-    }
 }
