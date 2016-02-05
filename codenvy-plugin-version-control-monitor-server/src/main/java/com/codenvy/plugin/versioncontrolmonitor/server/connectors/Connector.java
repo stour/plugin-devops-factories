@@ -10,7 +10,18 @@
  *******************************************************************************/
 package com.codenvy.plugin.versioncontrolmonitor.server.connectors;
 
+/**
+ * Connect to a third-party service in order to add Codenvy factory related data
+ *
+ * @author Stephane Tournie
+ */
 public interface Connector {
 
+    /**
+     * Add a factory link to the third-party service
+     *
+     * @param factoryUrl
+     *         the factory URL to add
+     */
     void addFactoryLink(String factoryUrl);
 }

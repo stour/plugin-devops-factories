@@ -41,18 +41,40 @@ import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 
+/**
+ * Jenkins implementation of {@link Connector}
+ * One {@link JenkinsConnector} is configured for one Jenkins job
+ *
+ * @author Stephane Tournie
+ */
 public class JenkinsConnector implements Connector {
 
     private static final Logger LOG = LoggerFactory.getLogger(JenkinsConnector.class);
 
+    // The name of the Jenkins job
     private final String jobName;
+    // The URL of the XML configuration of the Jenkins job
     private final String jobConfigXmlUrl;
 
+    /**
+     * Constructor
+     *
+     * @param url
+     *         the URL of the Jenkins instance to connect to
+     * @param jobName
+     *         the name of the Jenkins job
+     */
     public JenkinsConnector(final String url, final String jobName) {
         this.jobName = jobName;
         this.jobConfigXmlUrl = url + "/job/" + jobName + "/config.xml";
     }
 
+    /**
+     * Add a factory link to configured Jenkins job
+     *
+     * @param factoryUrl
+     *         the factory URL to add
+     */
     @Override
     public void addFactoryLink(String factoryUrl) {
         Optional<String> jobConfigXml = Optional.ofNullable(getCurrentJenkinsJobConfiguration());

@@ -55,6 +55,11 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static javax.ws.rs.core.UriBuilder.fromUri;
 
+/**
+ * Wrapper class for calls to Codenvy factory REST API
+ *
+ * @author Stephane Tournie
+ */
 public class FactoryConnection {
 
     private static final Logger LOG = LoggerFactory.getLogger(FactoryConnection.class);
@@ -66,6 +71,16 @@ public class FactoryConnection {
         this.baseUrl = baseUrl;
     }
 
+    /**
+     * Get a given factory
+     *
+     * @param factoryId
+     *         the id of the factory
+     * @param userToken
+     *         the authentication token to use against the Codenvy API
+     * @return the expected factory or null if an error occurred during the call to 'getFactory'
+     * @throws ServerException
+     */
     public Factory getFactory(String factoryId, Token userToken) throws ServerException {
         String url = fromUri(baseUrl).path(FactoryService.class).path(FactoryService.class, "getFactory")
                                      .build(factoryId).toString();
@@ -101,6 +116,16 @@ public class FactoryConnection {
         return factory;
     }
 
+    /**
+     * Find factories with given name
+     *
+     * @param factoryName
+     *         the factory name to match
+     * @param userToken
+     *         the authentication token to use against the Codenvy API
+     * @return the list of factories that match or null if an error occurred during the REST calls
+     * @throws ServerException
+     */
     public List<Factory> findMatchingFactories(String factoryName, Token userToken) throws ServerException {
         List<Link> factoryLinks;
         Pair factoryNameParam = Pair.of("project.name", factoryName);
@@ -156,13 +181,13 @@ public class FactoryConnection {
     }
 
     /**
-     * Update a given project into a given factory
+     * Update a given factory
      *
      * @param factory
      *         the factory to update
      * @param userToken
-     *         the authentication token to use in order to call the Codenvy API
-     * @return the updated factory or null if an error occurs during the 'updateFactory' API call
+     *         the authentication token to use against the Codenvy API
+     * @return the updated factory or null if an error occurred during the call to 'updateFactory'
      * @throws ServerException
      */
     public Factory updateFactory(Factory factory, Token userToken) throws ServerException {
@@ -200,6 +225,20 @@ public class FactoryConnection {
         return newFactory;
     }
 
+    /**
+     * Create a new factory with given project data
+     *
+     * @param name
+     *         the name of the project
+     * @param sourceLocation
+     *         the repository location to set in project
+     * @param commitId
+     *         the commitId to set in project source storage
+     * @param userToken
+     *         the authentication token to use against the Codenvy API
+     * @return the freshly created factory or null if an error occurred during the call to 'saveFactory'
+     * @throws ServerException
+     */
     public Factory createNewFactory(String name, String sourceLocation, String commitId, Token userToken) throws ServerException {
 
         // Build new factory object
@@ -240,6 +279,15 @@ public class FactoryConnection {
         return newFactory;
     }
 
+    /**
+     * Get value of a given factory link
+     *
+     * @param factoryLinks
+     *         the factory links
+     * @param rel
+     *         the name of the link to get
+     * @return the value of given factory link if exist, an empty {@link Optional} otherwise
+     */
     public static Optional<String> getFactoryUrl(final List<Link> factoryLinks, String rel) {
         List<Link> createProjectLinks = factoryLinks.stream()
                                                     .filter(link -> rel.equals(link.getRel())).collect(Collectors.toList());

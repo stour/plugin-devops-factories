@@ -29,6 +29,11 @@ import java.io.IOException;
 
 import static javax.ws.rs.core.UriBuilder.fromUri;
 
+/**
+ * Wrapper class for calls to Codenvy auth REST API
+ *
+ * @author Stephane Tournie
+ */
 public class AuthConnection {
 
     private static final Logger LOG = LoggerFactory.getLogger(AuthConnection.class);
@@ -40,6 +45,14 @@ public class AuthConnection {
         this.baseUrl = baseUrl;
     }
 
+    /**
+     * Authenticate against Codenvy
+     *
+     * @param username the username of the user to authenticate
+     * @param password the password of the user to authenticate
+     * @return an auth token if authentication is successful, null otherwise
+     * @throws ServerException
+     */
     public Token authenticateUser(String username, String password) throws ServerException {
         Token userToken;
         String url = fromUri(baseUrl).path(AuthenticationService.class).path(AuthenticationService.class, "authenticate")

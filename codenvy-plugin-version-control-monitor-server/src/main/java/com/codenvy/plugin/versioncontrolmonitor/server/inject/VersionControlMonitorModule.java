@@ -15,6 +15,11 @@ import com.google.inject.AbstractModule;
 
 import org.eclipse.che.inject.DynaModule;
 
+/**
+ * Guice binding for the Version Control Monitor plugin
+ *
+ * @author Stephane Tournie
+ */
 @DynaModule
 public class VersionControlMonitorModule extends AbstractModule {
 

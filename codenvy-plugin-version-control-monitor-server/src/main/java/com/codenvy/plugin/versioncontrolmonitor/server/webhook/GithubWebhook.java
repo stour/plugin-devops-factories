@@ -11,11 +11,10 @@
 package com.codenvy.plugin.versioncontrolmonitor.server.webhook;
 
 /**
- * Represents a webhook on a Github repository.
- * A factory can be linked to a webhook only if source.project.location = {@link repositoryUrl}
- * A webhook is linked to at least one factory.
+ * Link factories to a GitHub webhook.
+ * A factory may be linked to a webhook only if source.project.location = {@link repositoryUrl}
  *
- * @author stour
+ * @author Stephane Tournie
  */
 public class GithubWebhook {
 
@@ -24,7 +23,7 @@ public class GithubWebhook {
 
     public GithubWebhook(String repositoryUrl, String[] factoryIDs) {
         this.repositoryUrl = repositoryUrl;
-        // TODO Check that source.project.location = repositoryUrl for each factory
+        // TODO Check that source.project.location = repositoryUrl for at least one project in each factory
         this.factoryIDs = factoryIDs;
     }
 
