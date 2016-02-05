@@ -2,13 +2,13 @@
   "v":"4.0",
   "name":"factory-mktg-341",
   "workspace":{
-    "environments":{
-      "test-env":{
+    "environments":[
+     {
         "name":"test-env",
         "machineConfigs":[
           {
             "limits":{
-              "memory":2048
+              "ram":2048
             },
             "name":"dev-machine",
             "type":"docker",
@@ -20,7 +20,7 @@
           }
         ]
       }
-    },
+    ],
     "projects":[
       {
         "links":[
@@ -54,7 +54,7 @@
       }
     ],
     "name":"test-ws",
-    "defaultEnvName":"test-env",
+    "defaultEnv":"test-env",
     "commands":[
       {
         "commandLine":"mvn -f ${project.current.path} clean install",
