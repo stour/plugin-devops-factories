@@ -1,0 +1,102 @@
+{
+  "id": "8f717fd3-f969-4f4f-acef-79e8d6747fbb",
+  "eventType": "git.pullrequest.updated",
+  "publisherId": "tfs",
+  "message": {
+    "text": "Normal Paulk abandoned pull request 51 (Fix for build) in repository Fabrikam-Fiber-Git.\r\nhttps://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_git/Fabrikam-Fiber-Git/",
+    "html": "Normal Paulk abandoned pull request <a href=\"https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_git/Fabrikam-Fiber-Git/pullrequest/51#view=discussion\">51</a> (Fix for build) in repository <a href=\"https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_git/Fabrikam-Fiber-Git/\">Fabrikam-Fiber-Git</a>.",
+    "markdown": "Normal Paulk abandoned pull request [51](https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_git/Fabrikam-Fiber-Git/pullrequest/51#view=discussion) (Fix for build) in repository [Fabrikam-Fiber-Git](https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_git/Fabrikam-Fiber-Git/)."
+  },
+  "detailedMessage": {
+    "text": "Normal Paulk abandoned pull request 51 (Fix for build) in repository Fabrikam-Fiber-Git.\r\nhttps://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_git/Fabrikam-Fiber-Git/\r\n - Fix for build\r\r\n\r\n\r\n",
+    "html": "Normal Paulk abandoned pull request <a href=\"https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_git/Fabrikam-Fiber-Git/pullrequest/51#view=discussion\">51</a> (Fix for build) in repository <a href=\"https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_git/Fabrikam-Fiber-Git/\">Fabrikam-Fiber-Git</a>.<p> - Fix for build\r</p><p></p>",
+    "markdown": "Normal Paulk abandoned pull request [51](https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_git/Fabrikam-Fiber-Git/pullrequest/51#view=discussion) (Fix for build) in repository [Fabrikam-Fiber-Git](https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_git/Fabrikam-Fiber-Git/).\r\n - Fix for build\r\r\n\r\n\r\n"
+  },
+  "resource": {
+    "repository": {
+      "id": "278d5cd2-584d-4b63-824a-2ba458937249",
+      "url": "https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/git/repositories/278d5cd2-584d-4b63-824a-2ba458937249"
+    },
+    "pullRequestId": 51,
+    "status": "completed",
+    "createdBy": {
+      "id": "d6245f20-2af8-44f4-9451-8107cb2767db",
+      "displayName": "Normal Paulk",
+      "uniqueName": "fabrikamfiber16@hotmail.com",
+      "url": "https://fabrikam-fiber-inc.vssps.visualstudio.com/_apis/Identities/d6245f20-2af8-44f4-9451-8107cb2767db",
+      "imageUrl": "https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_api/_common/identityImage?id=d6245f20-2af8-44f4-9451-8107cb2767db"
+    },
+    "creationDate": "2014-11-05T21:09:11.5460751Z",
+    "closedDate": "2014-11-05T21:10:23.9787573Z",
+    "title": "Fix for build",
+    "description": " - Fix for build\r\n",
+    "sourceRefName": "refs/heads/users/normal/bugfixes",
+    "targetRefName": "refs/heads/master",
+    "mergeStatus": "succeeded",
+    "mergeId": "bbbe6087-50a2-4890-ab7f-954a7080378e",
+    "lastMergeSourceCommit": {
+      "commitId": "d410fef1af2fba935a998de3bfc6cf0ca5f5e947",
+      "url": "https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/git/repositories/278d5cd2-584d-4b63-824a-2ba458937249/commits/d410fef1af2fba935a998de3bfc6cf0ca5f5e947"
+    },
+    "lastMergeTargetCommit": {
+      "commitId": "9b03b366e298b9c554ee3cbcca1b5293bd6ce68f",
+      "url": "https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/git/repositories/278d5cd2-584d-4b63-824a-2ba458937249/commits/9b03b366e298b9c554ee3cbcca1b5293bd6ce68f"
+    },
+    "lastMergeCommit": {
+      "commitId": "d410fef1af2fba935a998de3bfc6cf0ca5f5e947",
+      "url": "https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/git/repositories/278d5cd2-584d-4b63-824a-2ba458937249/commits/d410fef1af2fba935a998de3bfc6cf0ca5f5e947"
+    },
+    "reviewers": [
+      {
+        "reviewerUrl": null,
+        "vote": 0,
+        "id": "8bd35c5e-30bb-4834-a0c4-d576ce1b8df7",
+        "displayName": "[Fabrikam-Fiber-Git]\\Fabrikam-Fiber-Git Team",
+        "uniqueName": "vstfs:///Classification/TeamProject/6ce954b1-ce1f-45d1-b94d-e6bf2464ba2c\\Fabrikam-Fiber-Git Team",
+        "url": "https://fabrikam-fiber-inc.vssps.visualstudio.com/_apis/Identities/8bd35c5e-30bb-4834-a0c4-d576ce1b8df7",
+        "imageUrl": "https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_api/_common/identityImage?id=8bd35c5e-30bb-4834-a0c4-d576ce1b8df7",
+        "isContainer": true
+      }
+    ],
+    "url": "https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/git/repositories/278d5cd2-584d-4b63-824a-2ba458937249/pullRequests/51",
+    "_links": {
+      "self": {
+        "href": "https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/git/repositories/278d5cd2-584d-4b63-824a-2ba458937249/pullRequests/51"
+      },
+      "repository": {
+        "href": "https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/git/repositories/278d5cd2-584d-4b63-824a-2ba458937249"
+      },
+      "workItems": {
+        "href": "https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/git/repositories/278d5cd2-584d-4b63-824a-2ba458937249/pullRequests/51/workitems"
+      },
+      "sourceBranch": {
+        "href": "https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/git/repositories/278d5cd2-584d-4b63-824a-2ba458937249/refs/refs/heads/users/normal/bugfixes"
+      },
+      "targetBranch": {
+        "href": "https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/git/repositories/278d5cd2-584d-4b63-824a-2ba458937249/refs/refs/heads/master"
+      },
+      "sourceCommit": {
+        "href": "https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/git/repositories/278d5cd2-584d-4b63-824a-2ba458937249/commits/d410fef1af2fba935a998de3bfc6cf0ca5f5e947"
+      },
+      "targetCommit": {
+        "href": "https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/git/repositories/278d5cd2-584d-4b63-824a-2ba458937249/commits/9b03b366e298b9c554ee3cbcca1b5293bd6ce68f"
+      },
+      "createdBy": {
+        "href": "https://fabrikam-fiber-inc.vssps.visualstudio.com/_apis/Identities/d6245f20-2af8-44f4-9451-8107cb2767db"
+      }
+    }
+  },
+  "resourceVersion": "1.0-preview.1",
+  "resourceContainers": {
+    "collection": {
+      "id": "d81542e4-cdfa-4333-b082-1ae2d6c3ad16"
+    },
+    "account": {
+      "id": "6affcbef-fe5d-44c6-8a29-439b79aaa118"
+    },
+    "project": {
+      "id": "6ce954b1-ce1f-45d1-b94d-e6bf2464ba2c"
+    }
+  },
+  "createdDate": "2014-11-05T21:10:26.194Z"
+}

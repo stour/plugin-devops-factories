@@ -1,0 +1,84 @@
+{
+  "subscriptionId":"c75e1cff-04d9-47d0-8529-4de872c942fc",
+  "notificationId":1,
+  "id":"f0905c60-6557-45e2-aac4-2a1fe9d7a8c0",
+  "eventType":"workitem.created",
+  "publisherId":"tfs",
+  "message":{
+    "text":"Bug #9 (New bug) created by Stéphane Tournié\r\n(https://stournie.visualstudio.com/web/wi.aspx?pcguid=8b808849-97cd-4429-a1e6-9dade729abb9&id=9)",
+    "html":"<a href=\"https://stournie.visualstudio.com/web/wi.aspx?pcguid=8b808849-97cd-4429-a1e6-9dade729abb9&amp;id=9\">Bug #9</a> (New bug) created by St&#233;phane Tourni&#233;",
+    "markdown":"[Bug #9](https://stournie.visualstudio.com/web/wi.aspx?pcguid=8b808849-97cd-4429-a1e6-9dade729abb9&id=9) (New bug) created by Stéphane Tournié"
+  },
+  "detailedMessage":{
+    "text":"Bug #9 (New bug) created by Stéphane Tournié\r\n(https://stournie.visualstudio.com/web/wi.aspx?pcguid=8b808849-97cd-4429-a1e6-9dade729abb9&id=9)\r\n\r\n- Area: codenvy\r\n- Iteration: codenvy\\Iteration 1\r\n- State: New\r\n- Severity: 3 - Medium\r\n",
+    "html":"<a href=\"https://stournie.visualstudio.com/web/wi.aspx?pcguid=8b808849-97cd-4429-a1e6-9dade729abb9&amp;id=9\">Bug #9</a> (New bug) created by St&#233;phane Tourni&#233;<ul>\r\n<li>Area: codenvy</li>\r\n<li>Iteration: codenvy\\Iteration 1</li>\r\n<li>State: New</li>\r\n<li>Severity: 3 - Medium</li></ul>",
+    "markdown":"[Bug #9](https://stournie.visualstudio.com/web/wi.aspx?pcguid=8b808849-97cd-4429-a1e6-9dade729abb9&id=9) (New bug) created by Stéphane Tournié\r\n\r\n* Area: codenvy\r\n* Iteration: codenvy\\Iteration 1\r\n* State: New\r\n* Severity: 3 - Medium\r\n"
+  },
+  "resource":{
+    "id":9,
+    "rev":1,
+    "fields":{
+      "System.AreaPath":"codenvy",
+      "System.TeamProject":"codenvy",
+      "System.IterationPath":"codenvy\\Iteration 1",
+      "System.WorkItemType":"Bug",
+      "System.State":"New",
+      "System.Reason":"New",
+      "System.CreatedDate":"2016-02-19T17:02:38.68Z",
+      "System.CreatedBy":"Stéphane Tournié <stournie@outlook.fr>",
+      "System.ChangedDate":"2016-02-19T17:02:38.68Z",
+      "System.ChangedBy":"Stéphane Tournié <stournie@outlook.fr>",
+      "System.Title":"New bug",
+      "Microsoft.VSTS.Common.StateChangeDate":"2016-02-19T17:02:38.68Z",
+      "Microsoft.VSTS.Common.Priority":2,
+      "Microsoft.VSTS.Common.Severity":"3 - Medium",
+      "Microsoft.VSTS.Common.ValueArea":"Business"
+    },
+    "relations":[
+      {
+        "rel":"System.LinkTypes.Hierarchy-Reverse",
+        "url":"https://stournie.visualstudio.com/DefaultCollection/_apis/wit/workItems/1",
+        "attributes":{
+          "isLocked":false
+        }
+      }
+    ],
+    "_links":{
+      "self":{
+        "href":"https://stournie.visualstudio.com/DefaultCollection/_apis/wit/workItems/9"
+      },
+      "workItemUpdates":{
+        "href":"https://stournie.visualstudio.com/DefaultCollection/_apis/wit/workItems/9/updates"
+      },
+      "workItemRevisions":{
+        "href":"https://stournie.visualstudio.com/DefaultCollection/_apis/wit/workItems/9/revisions"
+      },
+      "workItemHistory":{
+        "href":"https://stournie.visualstudio.com/DefaultCollection/_apis/wit/workItems/9/history"
+      },
+      "html":{
+        "href":"https://stournie.visualstudio.com/web/wi.aspx?pcguid=8b808849-97cd-4429-a1e6-9dade729abb9&id=9"
+      },
+      "workItemType":{
+        "href":"https://stournie.visualstudio.com/DefaultCollection/7db56ed1-82cf-451c-8178-4ef64d7ff4c0/_apis/wit/workItemTypes/Bug"
+      },
+      "fields":{
+        "href":"https://stournie.visualstudio.com/DefaultCollection/_apis/wit/fields"
+      }
+    },
+    "url":"https://stournie.visualstudio.com/DefaultCollection/_apis/wit/workItems/9"
+  },
+  "resourceVersion":"1.0",
+  "resourceContainers":{
+    "collection":{
+      "id":"8b808849-97cd-4429-a1e6-9dade729abb9"
+    },
+    "account":{
+      "id":"3545552a-710b-40a5-9413-10eb410d4329"
+    },
+    "project":{
+      "id":"7db56ed1-82cf-451c-8178-4ef64d7ff4c0"
+    }
+  },
+  "createdDate":"2016-02-19T17:02:40.881307Z"
+}

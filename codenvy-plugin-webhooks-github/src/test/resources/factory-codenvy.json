@@ -1,0 +1,148 @@
+{
+  "v":"4.0",
+  "name":"codenvy",
+  "workspace":{
+    "environments":[
+     {
+        "name":"test-env",
+        "machineConfigs":[
+          {
+            "limits":{
+              "ram":2048
+            },
+            "name":"dev-machine",
+            "type":"docker",
+            "source":{
+              "location":"http://internal.codenvycorp.com/api/recipe/recipe_ubuntu/script",
+              "type":"recipe"
+            },
+            "dev":true
+          }
+        ]
+      }
+    ],
+    "projects":[
+      {
+        "links":[
+
+        ],
+        "name":"dashboard",
+        "attributes":{
+          "contribute_to_branch":[
+            "master"
+          ]
+        },
+        "type":"GulpJS",
+        "source":{
+          "location":"https://github.com/codenvy-demos/dashboard.git",
+          "type":"git",
+          "parameters":{
+            "branch":"MKTG-341"
+          }
+        },
+        "modules":[
+
+        ],
+        "path":"/dashboard",
+        "problems":[
+
+        ],
+        "mixins":[
+          "git",
+          "contribution"
+        ]
+      }
+    ],
+    "name":"test-ws",
+    "defaultEnv":"test-env",
+    "commands":[
+      {
+        "commandLine":"mvn -f ${project.current.path} clean install",
+        "name":"build",
+        "type":"mvn"
+      }
+    ],
+    "links":[
+
+    ]
+  },
+  "id":"fakeFactoryId",
+  "creator":{
+    "created":1453385596798,
+    "userId":"TEST_USER_ID"
+  },
+  "links":[
+    {
+      "href":"http://internal.codenvycorp.com/api/factory/fakeFactoryId",
+      "parameters":[
+
+      ],
+      "rel":"self",
+      "method":"GET",
+      "produces":"application/json"
+    },
+    {
+      "href":"http://internal.codenvycorp.com/api/factory/fakeFactoryId/snippet?type=markdown",
+      "parameters":[
+
+      ],
+      "rel":"snippet/markdown",
+      "method":"GET",
+      "produces":"text/plain"
+    },
+    {
+      "href":"http://internal.codenvycorp.com/api/factory/fakeFactoryId/snippet?type=url",
+      "parameters":[
+
+      ],
+      "rel":"snippet/url",
+      "method":"GET",
+      "produces":"text/plain"
+    },
+    {
+      "href":"http://internal.codenvycorp.com/api/factory/fakeFactoryId/snippet?type=html",
+      "parameters":[
+
+      ],
+      "rel":"snippet/html",
+      "method":"GET",
+      "produces":"text/plain"
+    },
+    {
+      "href":"http://internal.codenvycorp.com/api/factory/fakeFactoryId/snippet?type=iframe",
+      "parameters":[
+
+      ],
+      "rel":"snippet/iframe",
+      "method":"GET",
+      "produces":"text/plain"
+    },
+    {
+      "href":"http://internal.codenvycorp.com/f?id=fakeFactoryId",
+      "parameters":[
+
+      ],
+      "rel":"accept",
+      "method":"GET",
+      "produces":"text/html"
+    },
+    {
+      "href":"http://internal.codenvycorp.com/f?name=factory-mktg-341&user=useraxi5p0fe2mlmmf3r",
+      "parameters":[
+
+      ],
+      "rel":"accept-named",
+      "method":"GET",
+      "produces":"text/html"
+    },
+    {
+      "href":"http://internal.codenvycorp.com/api/analytics/public-metric/factory_used?factory=http%3A%2F%2Finternal.codenvycorp.com%2Ff%3Fid%3DfakeFactoryId",
+      "parameters":[
+
+      ],
+      "rel":"accepted",
+      "method":"GET",
+      "produces":"text/plain"
+    }
+  ]
+}

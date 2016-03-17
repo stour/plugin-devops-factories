@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    CODENVY CONFIDENTIAL
-    __________________
-
      [2012] - [2016] Codenvy, S.A.
      All Rights Reserved.
 
@@ -23,13 +20,15 @@
     <parent>
         <artifactId>codenvy-plugin-parent</artifactId>
         <groupId>com.codenvy.plugin</groupId>
-        <version>4.0.0-RC4-SNAPSHOT</version>
+        <version>4.0.0-RC14-SNAPSHOT</version>
     </parent>
-    <artifactId>codenvy-plugin-version-control-monitor-parent</artifactId>
+    <artifactId>codenvy-plugin-webhooks-parent</artifactId>
     <packaging>pom</packaging>
-    <name>Codenvy Plugin :: Version Control Monitor :: Parent</name>
+    <name>Codenvy Plugin :: Webhooks :: Parent</name>
     <modules>
-        <module>codenvy-plugin-version-control-monitor-server</module>
+        <module>codenvy-plugin-webhooks-base</module>
+        <module>codenvy-plugin-webhooks-github</module>
+        <module>codenvy-plugin-webhooks-vsts</module>
     </modules>
     <repositories>
         <repository>
