@@ -14,7 +14,6 @@
  */
 package com.codenvy.plugin.webhooks.vsts;
 
-
 import com.codenvy.plugin.webhooks.vsts.shared.Repository;
 import com.codenvy.plugin.webhooks.vsts.shared.StorageDocument;
 
@@ -34,6 +33,11 @@ import java.util.Base64;
 
 import static java.lang.String.format;
 
+/**
+ * Wrapper class for calls to Visual Studio Team Services REST API
+ *
+ * @author Stephane Tournie
+ */
 public class VSTSConnection {
 
     private static final Logger LOG = LoggerFactory.getLogger(VSTSConnection.class);
@@ -109,17 +113,16 @@ public class VSTSConnection {
 
         HttpJsonRequest httpJsonRequest = httpJsonRequestFactory.fromUrl(repositoryIdUrl).useGetMethod().setAuthorizationHeader(
                 basicAuth).addQueryParam("api-version", apiVersion);
-        Repository repository;
         try {
             HttpJsonResponse response = httpJsonRequest.request();
-            repository = response.asDto(Repository.class);
+            Repository repository = response.asDto(Repository.class);
             LOG.debug("Repository obtained: {}", repository);
+            return repository.getRemoteUrl();
 
         } catch (IOException | ApiException e) {
             LOG.error(e.getLocalizedMessage(), e);
             throw new ServerException(e.getLocalizedMessage());
         }
-        return repository.getRemoteUrl();
     }
 
     /**
@@ -136,11 +139,10 @@ public class VSTSConnection {
     private String extensionStorageHttpUrl(final String visualStudioHost, final String account, final String collection) {
         //https://vsts-test.visualstudio.com/DefaultCollection/_apis
         //https://vsts-test.extmgmt.visualstudio.com/DefaultCollection/_apis
-        final String host = format("%s.extmgmt.%s.com", account, visualStudioHost);
-        final String collectionPath = format("%s/_apis", collection);
-        final String extensionStoragePath =
-                format("ExtensionManagement/InstalledExtensions/%s/%s/Data/Scopes/Default/Current/Collections/$settings/Documents",
-                       PUBLISHER, EXTENSION);
+        final String host = account + ".extmgmt." + visualStudioHost + ".com";
+        final String collectionPath = collection + "/_apis";
+        final String extensionStoragePath = "ExtensionManagement/InstalledExtensions/" + PUBLISHER + "/" + EXTENSION +
+                                            "/Data/Scopes/Default/Current/Collections/$settings/Documents";
         return format("%s://%s/%s/%s", PROTOCOL, host, collectionPath, extensionStoragePath);
     }
 }

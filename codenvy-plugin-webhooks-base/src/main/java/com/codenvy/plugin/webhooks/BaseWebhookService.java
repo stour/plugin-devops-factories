@@ -16,7 +16,6 @@ package com.codenvy.plugin.webhooks;
 
 import com.codenvy.plugin.webhooks.connectors.Connector;
 import com.codenvy.plugin.webhooks.connectors.JenkinsConnector;
-import com.google.common.collect.Lists;
 
 import org.eclipse.che.api.auth.shared.dto.Token;
 import org.eclipse.che.api.core.ServerException;
@@ -37,10 +36,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.stream.Collectors.toList;
@@ -67,26 +64,6 @@ public abstract class BaseWebhookService extends Service {
     }
 
     /**
-     * Get a {@link java.util.function.Predicate} that matches project configured with given repository and branch
-     *
-     * @param repositoryUrl
-     *         the repo that the project source location has to match
-     * @param branch
-     *         the branch that the project has to match
-     * @return the {@link java.util.function.Predicate} that matches relevant project(s)
-     */
-    private Predicate<ProjectConfigDto> matchingProjectPredicate(String repositoryUrl, String branch) {
-        return (p -> p.getSource() != null
-                     && !isNullOrEmpty(p.getSource().getType())
-                     && !isNullOrEmpty(p.getSource().getLocation())
-                     && (repositoryUrl.equals(p.getSource().getLocation())
-                         || (repositoryUrl + ".git").equals(p.getSource().getLocation()))
-                     && ("master".equals(branch)
-                         || (!isNullOrEmpty(p.getSource().getParameters().get("branch"))
-                             && branch.equals(p.getSource().getParameters().get("branch")))));
-    }
-
-    /**
      * Get factories that contain a project for given repository and branch
      *
      * @param factoryIDs
@@ -99,16 +76,17 @@ public abstract class BaseWebhookService extends Service {
      */
     protected List<Factory> getFactoriesForRepositoryAndBranch(final Set<String> factoryIDs, final String headRepositoryUrl,
                                                                final String headBranch) throws ServerException {
-        List<Factory> factories = Lists.newArrayList();
+        List<Factory> factories = new ArrayList<>();
         for (String factoryID : factoryIDs) {
             factories.add(factoryConnection.getFactory(factoryID));
         }
 
-        return factories.stream().filter(f -> (f != null) && (!f.getWorkspace().getProjects().stream()
-                                                                .filter(matchingProjectPredicate(headRepositoryUrl, headBranch))
-                                                                .collect(toList())
-                                                                .isEmpty()))
-                                 .collect(toList());
+        return factories.stream()
+                        .filter(f -> (f != null)
+                                     && (f.getWorkspace().getProjects()
+                                           .stream()
+                                           .anyMatch(p -> isProjectMatching(p, headRepositoryUrl, headBranch))))
+                        .collect(toList());
     }
 
     /**
@@ -127,47 +105,30 @@ public abstract class BaseWebhookService extends Service {
      * @return the project that matches the predicate given in argument
      * @throws ServerException
      */
-    protected Factory updateProjectInFactory(final Factory factory, final String headRepositoryUrl, final String headBranch,
-                                             final String baseRepositoryUrl, final String headCommitId) throws ServerException {
-        // Get matching project in factory
-        WorkspaceConfigDto workspace = factory.getWorkspace();
-        final List<ProjectConfigDto> factoryProjects = workspace.getProjects();
+    protected Factory updateProjectInFactory(final Factory factory,
+                                             final String headRepositoryUrl,
+                                             final String headBranch,
+                                             final String baseRepositoryUrl,
+                                             final String headCommitId) throws ServerException {
+        // Get projects in factory
+        final List<ProjectConfigDto> factoryProjects = factory.getWorkspace().getProjects();
 
-        final List<ProjectConfigDto> updatedMatchingProjects =
-                factoryProjects.stream()
-                               .filter(matchingProjectPredicate(headRepositoryUrl, headBranch))
-                               .map(project -> {
-                                   // Update repository and commitId
-                                   final SourceStorageDto source = project.getSource();
-                                   final Map<String, String> projectParams = source.getParameters();
-                                   source.setLocation(baseRepositoryUrl);
-                                   projectParams.put("commitId", headCommitId);
+        factoryProjects.stream()
+                       .filter(project -> isProjectMatching(project, headRepositoryUrl, headBranch))
+                       .forEach(project -> {
+                           // Update repository and commitId
+                           final SourceStorageDto source = project.getSource();
+                           final Map<String, String> projectParams = source.getParameters();
+                           source.setLocation(baseRepositoryUrl);
+                           projectParams.put("commitId", headCommitId);
 
-                                   // Clean branch parameter if exist
-                                   projectParams.remove("branch");
+                           // Clean branch parameter if exist
+                           projectParams.remove("branch");
 
-                                   // Replace existing project with updated one
-                                   source.setParameters(projectParams);
-                                   return project.withSource(source);
-                               })
-                               .collect(toList());
+                           source.setParameters(projectParams);
+                       });
 
-        if (updatedMatchingProjects.isEmpty()) {
-            throw new ServerException(
-                    String.format("Factory %s contains no project for repository %s and branch %s.", factory.getId(), headRepositoryUrl,
-                                  headBranch));
-        }
-
-        factoryProjects.removeIf(
-                project -> !updatedMatchingProjects.stream()
-                                                   .filter(updatedProject -> updatedProject.getName().equals(project.getName()))
-                                                   .collect(toList())
-                                                   .isEmpty());
-        factoryProjects.addAll(updatedMatchingProjects);
-
-        workspace.setProjects(factoryProjects);
-
-        return factory.withWorkspace(workspace);
+        return factory;
     }
 
     /**
@@ -190,12 +151,14 @@ public abstract class BaseWebhookService extends Service {
     }
 
     protected void updateFactory(final Factory factory) throws ServerException {
-        final Optional<Factory> persistedFactory = Optional.ofNullable(factoryConnection.updateFactory(factory));
+        final Factory persistedFactory = factoryConnection.updateFactory(factory);
 
-        Factory pF = persistedFactory.orElseThrow(() -> new ServerException(
-                String.format("Error during update of factory with id %s and name %s", factory.getId(), factory.getName())));
+        if (persistedFactory == null) {
+            throw new ServerException(
+                    String.format("Error during update of factory with id %s and name %s", factory.getId(), factory.getName()));
+        }
 
-        LOG.debug("Factory with id {} and name {} successfully updated", pF.getId(), pF.getName());
+        LOG.debug("Factory with id {} and name {} successfully updated", persistedFactory.getId(), persistedFactory.getName());
     }
 
     /**
@@ -302,6 +265,42 @@ public abstract class BaseWebhookService extends Service {
             LOG.error(e.getLocalizedMessage());
             throw new ServerException(e.getLocalizedMessage());
         }
+    }
+
+    /**
+     * Whether or not a given project matches given repository and branch
+     *
+     * @param project
+     *         the project to check
+     * @param repositoryUrl
+     *         the repo that the project source location has to match
+     * @param branch
+     *         the branch that the project has to match
+     * @return the {@link java.util.function.Predicate} that matches relevant project(s)
+     */
+    private boolean isProjectMatching(final ProjectConfigDto project, final String repositoryUrl, final String branch) {
+
+        if (isNullOrEmpty(repositoryUrl) || isNullOrEmpty(branch)) {
+            return false;
+        }
+
+        final SourceStorageDto source = project.getSource();
+        if (source == null) {
+            return false;
+        }
+
+        final String projectType = source.getType();
+        final String projectLocation = source.getLocation();
+        final String projectBranch = source.getParameters().get("branch");
+
+        if (isNullOrEmpty(projectType) || isNullOrEmpty(projectLocation)) {
+            return false;
+        }
+        return (repositoryUrl.equals(projectLocation)
+                || (repositoryUrl + ".git").equals(projectLocation))
+               && ("master".equals(branch)
+                   || (!isNullOrEmpty(projectBranch)
+                       && branch.equals(projectBranch)));
     }
 
     /**

@@ -80,9 +80,9 @@ public class JenkinsConnector implements Connector {
      */
     @Override
     public void addFactoryLink(String factoryUrl) {
-        Optional<String> jobConfigXml = Optional.ofNullable(getCurrentJenkinsJobConfiguration());
+        Optional<String> jobConfigXml = getCurrentJenkinsJobConfiguration();
         jobConfigXml.ifPresent(xml -> {
-            Optional<Document> configDocument = Optional.ofNullable(xmlToDocument(xml));
+            Optional<Document> configDocument = xmlToDocument(xml);
             configDocument.ifPresent(doc -> {
                 Element root = doc.getDocumentElement();
                 Node descriptionNode = root.getElementsByTagName("description").item(0);
@@ -96,17 +96,17 @@ public class JenkinsConnector implements Connector {
         });
     }
 
-    protected String getCurrentJenkinsJobConfiguration() {
+    protected Optional<String> getCurrentJenkinsJobConfiguration() {
         Client client = ClientBuilder.newClient();
         WebTarget target = client.target(jobConfigXmlUrl);
         Invocation.Builder builder = target.request(APPLICATION_XML);
         Response response = builder.get();
         if (response.getStatus() == 200) {
             String responseString = response.readEntity(String.class);
-            return responseString;
+            return Optional.of(responseString);
         } else {
             LOG.error(response.getStatus() + " - " + response.readEntity(String.class));
-            return null;
+            return Optional.empty();
         }
     }
 
@@ -142,7 +142,7 @@ public class JenkinsConnector implements Connector {
         return writer.toString();
     }
 
-    protected Document xmlToDocument(String jobConfigXml) {
+    protected Optional<Document> xmlToDocument(String jobConfigXml) {
         Document document = null;
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -152,7 +152,7 @@ public class JenkinsConnector implements Connector {
         } catch (ParserConfigurationException | SAXException | IOException e) {
             e.printStackTrace();
         }
-        return document;
+        return Optional.ofNullable(document);
     }
 }
 

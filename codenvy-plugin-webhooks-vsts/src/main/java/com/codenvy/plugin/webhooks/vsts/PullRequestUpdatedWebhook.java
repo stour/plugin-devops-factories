@@ -41,8 +41,12 @@ public class PullRequestUpdatedWebhook {
     private final Pair<String, String> credentials;
     private final Set<String>          factoriesIds;
 
-    public PullRequestUpdatedWebhook(final String host, final String account, final String collection,
-                                     final String apiVersion, final Pair<String, String> credentials, final String... factoriesIds) {
+    public PullRequestUpdatedWebhook(final String host,
+                                     final String account,
+                                     final String collection,
+                                     final String apiVersion,
+                                     final Pair<String, String> credentials,
+                                     final String... factoriesIds) {
         this.host = host;
         this.account = account;
         this.collection = collection;

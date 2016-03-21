@@ -46,7 +46,6 @@ import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -85,7 +84,7 @@ public class GitHubWebhookService extends BaseWebhookService {
                                              @Context HttpServletRequest request)
             throws ServerException {
 
-        Response response = null;
+        Response response = Response.ok().build();
         try (ServletInputStream inputStream = request.getInputStream()) {
             if (inputStream != null) {
                 String githubHeader = request.getHeader(GITHUB_REQUEST_HEADER);
@@ -93,11 +92,11 @@ public class GitHubWebhookService extends BaseWebhookService {
                     switch (githubHeader) {
                         case "push":
                             final PushEvent pushEvent = DtoFactory.getInstance().createDtoFromJson(inputStream, PushEvent.class);
-                            response = handlePushEvent(pushEvent);
+                            handlePushEvent(pushEvent);
                             break;
                         case "pull_request":
                             final PullRequestEvent PRevent = DtoFactory.getInstance().createDtoFromJson(inputStream, PullRequestEvent.class);
-                            response = handlePullRequestEvent(PRevent);
+                            handlePullRequestEvent(PRevent);
                             break;
                         default:
                             response = Response.accepted(new GenericEntity<>(
@@ -124,7 +123,7 @@ public class GitHubWebhookService extends BaseWebhookService {
      * HTTP 202 response if event was processed partially
      * @throws ServerException
      */
-    private Response handlePushEvent(PushEvent contribution) throws ServerException {
+    private void handlePushEvent(PushEvent contribution) throws ServerException {
         LOG.debug("{}", contribution);
 
         // Set current Codenvy user
@@ -141,23 +140,22 @@ public class GitHubWebhookService extends BaseWebhookService {
         // Get factories that contain a project for given repository and branch
         final List<Factory> factories = getFactoriesForRepositoryAndBranch(factoriesIDs, contribRepositoryHtmlUrl, contribBranch);
         if (factories.isEmpty()) {
-            throw new ServerException(
-                    String.format("No factory found for repository %s and branch %s", contribRepositoryHtmlUrl, contribBranch));
+            throw new ServerException("No factory found for repository " + contribRepositoryHtmlUrl + " and branch " + contribBranch);
         }
 
         for (Factory f : factories) {
             // Get 'open factory' URL
-            final Optional<Link> factoryLink = Optional.ofNullable(f.getLink(FACTORY_URL_REL));
-            final Link link = factoryLink.orElseThrow(() -> new ServerException(
-                    String.format("Factory %s do not contain mandatory \'%s\' link", f.getId(), FACTORY_URL_REL)));
+            final Link factoryLink = f.getLink(FACTORY_URL_REL);
+            if (factoryLink == null) {
+                throw new ServerException("Factory " + f.getId() + " do not contain mandatory \'" + FACTORY_URL_REL + "\' link");
+            }
 
             // Get connectors configured for the factory
             final List<Connector> connectors = getConnectors(f.getId());
 
             // Add factory link within third-party services
-            connectors.forEach(connector -> connector.addFactoryLink(link.getHref()));
+            connectors.forEach(connector -> connector.addFactoryLink(factoryLink.getHref()));
         }
-        return Response.ok().build();
     }
 
     /**
@@ -169,7 +167,7 @@ public class GitHubWebhookService extends BaseWebhookService {
      * HTTP 202 response if event was processed partially
      * @throws ServerException
      */
-    private Response handlePullRequestEvent(PullRequestEvent prEvent) throws ServerException {
+    private void handlePullRequestEvent(PullRequestEvent prEvent) throws ServerException {
         LOG.debug("{}", prEvent);
 
         // Set current Codenvy user
@@ -179,7 +177,7 @@ public class GitHubWebhookService extends BaseWebhookService {
         final String action = prEvent.getAction();
         if (!"closed".equals(action)) {
             throw new ServerException(
-                    String.format("PullRequest Event action is %s. %s do not handle this one.", action, this.getClass().getSimpleName()));
+                    "PullRequest Event action is " + action + ". " + this.getClass().getSimpleName() + " do not handle this one.");
         }
         final boolean isMerged = prEvent.getPullRequest().getMerged();
         if (!isMerged) {
@@ -200,7 +198,7 @@ public class GitHubWebhookService extends BaseWebhookService {
         // Get factories that contain a project for given repository and branch
         final List<Factory> factories = getFactoriesForRepositoryAndBranch(factoriesIDs, prHeadRepositoryHtmlUrl, prHeadBranch);
         if (factories.isEmpty()) {
-            throw new ServerException(String.format("No factory found for branch %s", prHeadBranch));
+            throw new ServerException("No factory found for branch " + prHeadBranch);
         }
 
         for (Factory f : factories) {
@@ -213,8 +211,6 @@ public class GitHubWebhookService extends BaseWebhookService {
 
             // TODO Remove factory id from webhook
         }
-
-        return Response.ok().build();
     }
 
     /**
@@ -230,10 +226,10 @@ public class GitHubWebhookService extends BaseWebhookService {
             throws ServerException {
 
         // Get webhook configured for given repository
-        final Optional<GithubWebhook> webhook = Optional.ofNullable(getGitHubWebhook(baseRepositoryHtmlUrl));
+        final Optional<GithubWebhook> webhook = getGitHubWebhook(baseRepositoryHtmlUrl);
 
         final GithubWebhook w = webhook.orElseThrow(
-                () -> new ServerException(String.format("No webhook configured for repository %s", baseRepositoryHtmlUrl)));
+                () -> new ServerException("No webhook configured for repository " + baseRepositoryHtmlUrl));
 
         // Get factory id's listed into the webhook
         return w.getFactoriesIds();
@@ -247,7 +243,7 @@ public class GitHubWebhookService extends BaseWebhookService {
      * @return the webhook configured for the repository or null if no webhook is configured for this repository
      * @throws ServerException
      */
-    private GithubWebhook getGitHubWebhook(String repositoryUrl) throws ServerException {
+    private Optional<GithubWebhook> getGitHubWebhook(String repositoryUrl) throws ServerException {
         List<GithubWebhook> webhooks = getGitHubWebhooks();
         GithubWebhook webhook = null;
         for (GithubWebhook w : webhooks) {
@@ -256,7 +252,7 @@ public class GitHubWebhookService extends BaseWebhookService {
                 webhook = w;
             }
         }
-        return webhook;
+        return Optional.ofNullable(webhook);
     }
 
     /**
@@ -272,12 +268,15 @@ public class GitHubWebhookService extends BaseWebhookService {
         Set<String> keySet = webhooksProperties.stringPropertyNames();
         keySet.stream().forEach(key -> {
             String value = webhooksProperties.getProperty(key);
-            String[] valueSplit = value.split(",");
-            if (valueSplit[0].equals("github")) {
-                String[] factoriesIDs = valueSplit[2].split(";");
-                GithubWebhook githubWebhook = new GithubWebhook(valueSplit[1], factoriesIDs);
-                webhooks.add(githubWebhook);
-                LOG.debug("new GithubWebhook({}, {})", valueSplit[1], Arrays.toString(factoriesIDs));
+            if (!isNullOrEmpty(value)) {
+                String[] valueSplit = value.split(",");
+                if (valueSplit.length == 3
+                    && valueSplit[0].equals("github")) {
+                    String[] factoriesIDs = valueSplit[2].split(";");
+                    GithubWebhook githubWebhook = new GithubWebhook(valueSplit[1], factoriesIDs);
+                    webhooks.add(githubWebhook);
+                    LOG.debug("new GithubWebhook({})", value);
+                }
             }
         });
         return webhooks;

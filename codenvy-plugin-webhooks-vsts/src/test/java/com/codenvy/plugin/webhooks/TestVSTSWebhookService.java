@@ -16,7 +16,7 @@ package com.codenvy.plugin.webhooks;
 
 import com.codenvy.plugin.webhooks.vsts.VSTSConnection;
 import com.codenvy.plugin.webhooks.vsts.VSTSWebhookService;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 
 import org.eclipse.che.api.auth.shared.dto.Token;
 import org.eclipse.che.api.factory.shared.dto.Factory;
@@ -71,7 +71,7 @@ public class TestVSTSWebhookService {
         // Prepare factoryConnection
         FactoryConnection mockFactoryConnection = mock(FactoryConnection.class);
         Factory VSTSfakeFactory = DtoFactory.getInstance().createDtoFromJson(resourceToString("factory-codenvy.json"), Factory.class);
-        when(mockFactoryConnection.findFactory("codenvy", FAKE_USER_ID)).thenReturn(Lists.newArrayList(VSTSfakeFactory));
+        when(mockFactoryConnection.findFactory("codenvy", FAKE_USER_ID)).thenReturn(ImmutableList.of(VSTSfakeFactory));
         when(mockFactoryConnection.saveFactory(anyObject())).thenReturn(VSTSfakeFactory);
         when(mockFactoryConnection.getFactory(VSTSfakeFactory.getId())).thenReturn(VSTSfakeFactory);
         when(mockFactoryConnection.updateFactory(VSTSfakeFactory)).thenReturn(VSTSfakeFactory);
